@@ -2625,56 +2625,6 @@ a.card-control>i.fa-caret-down,a.card-control>i.fa-caret-up{
     border-color: #4CAF50;
 }
 
-.cooking-dialog {
-    font-family: var(--font-primary);
-	text-transform: uppercase;
-    margin: 10px;
-    color: black;
-}
-
-.cooking-dialog .header {
-	font-family: var(--font-special);
-    text-align: center;
-    margin-bottom: 20px;
-}
-
-.cooking-dialog h2 {
-    font-size: 24px;
-    margin: 0;
-    padding-bottom: 10px;
-    border-bottom: 2px solid #ddd;
-}
-
-.cooking-dialog .input-section {
-    display: flex;
-    flex-direction: column;
-    margin-top: 20px;
-	text-align: center;
-}
-
-.cooking-dialog label {
-    font-size: 16px;
-    margin-bottom: 5px;
-	text-align: center;
-}
-
-.cooking-dialog input::placeholder{
-    color: lightgray;
-}
-
-.cooking-dialog input[type="text"] {
-    padding: 10px;
-    font-size: 16px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    width: 100%;
-}
-
-.cooking-dialog input[type="text"]:focus {
-    outline: none;
-    border-color: #4CAF50;
-}
-
 .roll-dialog{
 	display:flex;
 	flex-direction:column;
@@ -4577,6 +4527,41 @@ html.no-borders #sidebar,html.no-borders #players,html.no-borders #hotbar #actio
 	font-size: 18px;
 	font-weight: 800;
 }
+
+.cooking-dialog {
+	height: 680px;
+	width: auto;
+}
+
+.cooking-header {
+	font-family: var(--font-primary);
+	font-size: 24px;
+	text-align: center;
+	margin-top: 10px;
+	text-transform: uppercase;
+}
+
+.cooking-dialog button {
+	margin-bottom: 10px;
+	background-color: white;
+	color: black;
+	font-family: var(--font-primary);
+	font-size: 18px;
+	font-weight: 800;
+}
+
+#cookingformula {
+	margin-top: 20px!important;
+	margin-bottom: 20px!important;
+	border-radius: 0!important;
+	height: 50px!important;
+	text-align: center;
+	font-size: 18px;
+	font-family: var(--font-primary);
+}
+
+
+
 
 
 button:hover, button:focus {

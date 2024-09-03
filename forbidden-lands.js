@@ -6503,14 +6503,14 @@ function openCookingDialogForMember(member) {
     const dialog = new Dialog({
         title: "Cooking",
         content: `
-        <div class="cooking-dialog">
+        <div class="">
             <div class="header">
                 <h2>Cooking</h2>
                 <img class="profile-img" src="systems/forbidden-lands/assets/assorted/cooking.png" data-edit="img" title="" />
             </div>
             <div class="input-section">
-                <label for="dice-formula">Enter Cooking Formula:</label>
-                <input type="text" placeholder="1d6" id="dice-formula" name="dice-formula" value="1d6" />
+                <h4 class="cooking-header" for="dice-formula">Enter Cooking Formula:</h4>
+                <input type="text" placeholder="1d6" id="cookingformula" name="dice-formula" value="1d6" />
             </div>
         </div>
     `,
@@ -6532,16 +6532,14 @@ function openCookingDialogForMember(member) {
                 }
             }
         },
-        default: "roll",
-    });
-
-    dialog.render(true);
-
-    // Ensure dialog height is correctly set after rendering
-    setTimeout(() => {
-        dialog.setPosition({ height: 'auto' });
-    }, 100);
+        default: "",
+    }, {
+        // Options to customize the dialog's dimensions
+        resizable: true, // prevent resizing
+        classes: ["cooking-dialog"] // add a custom class for further customization if needed
+    }).render(true);
 }
+
 
 
 // Funktion zum Würfeln für das Kochen
