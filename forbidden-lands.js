@@ -5981,7 +5981,7 @@ function handleTravelAction(assignedPartyMemberIds, rollName) {
     
                 actor._pendingRewards = [];
             }
-        }, 2500); 
+        }, 500); 
     }
     
     
@@ -5990,11 +5990,10 @@ function handleTravelAction(assignedPartyMemberIds, rollName) {
     
         new Dialog({
             title: `Select Crafting Option for ${actor.name}`,
-            content: 
-                `<p>Do you want to start a new project or continue an existing one?</p>`,
+            content: ``,
             buttons: {
                 new: {
-                    label: "New Project",
+                    label: "Start New Project",
                     callback: () => openNewProjectDialog(actor)
                 },
                 existing: {
@@ -6005,9 +6004,14 @@ function handleTravelAction(assignedPartyMemberIds, rollName) {
                     label: "Close",
                 }
             },
-            default: "close"
+            default: ""
+        }, {
+            // Options to customize the dialog's dimensions
+            resizable: true, // prevent resizing
+            classes: ["crafting-dialog"] // add a custom class for further customization if needed
         }).render(true);
     }
+    
     
     function openNewProjectDialog(actor) {
         let selectedItem = null;
@@ -6015,18 +6019,18 @@ function handleTravelAction(assignedPartyMemberIds, rollName) {
         new Dialog({
             title: `Select Crafting Item for ${actor.name}`,
             content: 
-                `<div class="dialog-content" style="display: flex; flex-direction: column; height: 100%; max-width: 600px; margin: 0 auto;">
+                `<div class="dialog-content" style="display: flex; flex-direction: column; height: 100%; margin: 0 auto;">
                     <div style="flex-grow: 1;">
-                        <img class="profile-img" style="max-width: 400px;" src="systems/forbidden-lands/assets/assorted/crafting.webp" data-edit="img" title="" />
-                        <input type="text" id="item-search" placeholder="Search for items..." style="width: 100%;" />
+                        <img class="profile-img" src="systems/forbidden-lands/assets/assorted/crafting.webp" data-edit="img" title="" />
+                        <input type="text" class="item-search" id="item-search" placeholder="Search for items..." style="width: 100%;" />
                         <ul id="item-list" style="text-align:center; list-style: none; padding: 0; max-height: 400px; overflow-y: auto;">
                             ${game.items.contents
                                 .slice(0, 3)
                                 .map(item => `<li data-item-id="${item.id}">${item.name}</li>`)
                                 .join('')}
                         </ul>
-                        <div id="item-details" style="margin-top: 30px; background-color: lightgray; margin-bottom: 40px; text-align: center; padding: 10px; border: 1px solid #ccc; border-radius: 5px;">
-                            <img id="item-img" src="" style="display: none; max-width: 200px; margin-bottom: 10px;" />
+                        <div id="item-details" style="margin-top: 30px; background-color: lightgray; margin-bottom: 20px; text-align: center; padding: 10px; border: 1px solid #ccc; border-radius: 5px;">
+                            <img id="item-img" src="" style="display: none; max-width: 150px; margin-bottom: 10px;" />
                             <p><strong>Required Materials:</strong> <span id="materials">None</span></p>
                             <p><strong>Required Talents:</strong> <span id="talents">None</span></p>
                             <p><strong>Required Time:</strong> <span id="time">None</span></p>
@@ -6113,10 +6117,10 @@ function handleTravelAction(assignedPartyMemberIds, rollName) {
                 }, 10);
             },
             
-            default: "close"
+            default: ""
         }, {
-            width: 400,
-            height: 'auto',
+            resizable: true, // prevent resizing
+            classes: ["crafting-dialog-new"] // add a custom class for further customization if needed
         }).render(true);
     }
     
@@ -6184,12 +6188,12 @@ function handleTravelAction(assignedPartyMemberIds, rollName) {
         const dialog = new Dialog({
             title: `Select Existing Project for ${actor.name}`,
             content: 
-                `<div class="dialog-content" style="display: flex; flex-direction: column; height: 100%; max-width: 600px; margin: 0 auto;">
-                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 20px">
+                `<div class="dialog-content" style="display: flex; flex-direction: column; height: 100%; margin: 0 auto;">
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px">
                         ${projectItems.length > 0
                             ? projectItems.map(item => `
-                                <button data-item-id="${item.id}" class="project-item" style="padding: 10px; text-align: center; border: 1px solid #ccc; border-radius: 5px; background-color: #f0f0f0; cursor: pointer;">
-                                    ${item.name}
+                                <button data-item-id="${item.id}" class="project-item" style="padding: 10px; text-align: center; border: 1px solid #ccc; border-radius: 5px; cursor: pointer;">
+                                   <img src="${item.img}"> <br> ${item.name}
                                 </button>
                             `).join('')
                             : '<p>No existing projects found.</p>'}
@@ -6335,10 +6339,10 @@ function handleTravelAction(assignedPartyMemberIds, rollName) {
                 });
             },
         
-            default: "close"
+            default: ""
         }, {
-            width: 400,
-            height: 'auto',
+            resizable: true, // prevent resizing
+            classes: ["crafting-dialog-existing"] // add a custom class for further customization if needed
         });
         
         dialog.render(true);

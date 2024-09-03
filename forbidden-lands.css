@@ -4515,6 +4515,77 @@ html.no-borders #sidebar,html.no-borders #players,html.no-borders #hotbar #actio
 .editor:focus .editor-edit i,.editor:hover .editor-edit i,.journal-entry-page.text:focus .edit-container .editor-edit i,.journal-entry-page.text:hover .edit-container .editor-edit i{
 	font-size:var(--font-size-16)
 }
+
+.crafting-dialog {
+	height: auto;
+	width: auto;
+}
+
+.crafting-dialog h3 {
+	font-family: var(--font-primary);
+	font-size: 28px;
+	text-align: center;
+}
+
+.crafting-dialog button {
+	margin-bottom: 10px;
+	background-color: white;
+	color: black;
+	font-family: var(--font-primary);
+	font-size: 18px;
+	font-weight: 800;
+}
+
+.crafting-dialog-new {
+	height: 870px;
+	width: auto;
+	padding: 10px!important;
+}
+
+#item-list {
+	font-size: 22px!important;
+	font-weight: 800!important;
+}
+
+.crafting-dialog-new button {
+	margin-bottom: 10px;
+	background-color: white;
+	color: black;
+	font-family: var(--font-primary);
+	font-size: 18px;
+	font-weight: 800;
+}
+
+#item-search{
+	margin-top: 20px!important;
+	border-radius: 0!important;
+	height: 50px!important;
+}
+
+
+.crafting-dialog-existing {
+	height: auto;
+	width: 600px!important;
+	padding: 10px!important;
+}
+
+.crafting-dialog-existing button {
+	margin-bottom: 10px;
+	background-color: white;
+	color: black;
+	font-family: var(--font-primary);
+	font-size: 18px;
+	font-weight: 800;
+}
+
+
+button:hover, button:focus {
+    outline: none;
+    box-shadow: none!important;
+	background-color: lightgray;
+}
+
+
 .journal-sheet .journal-header{
 	margin:0 16px 16px
 }
