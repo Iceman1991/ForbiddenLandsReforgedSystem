@@ -2963,6 +2963,7 @@ a.card-control>i.fa-caret-down,a.card-control>i.fa-caret-up{
 
 .dice-roll {
 	display: block!important;
+	text-align: center;
 }
 
 .dice-tooltip .dice-rolls .roll{
@@ -3078,8 +3079,10 @@ a.card-control>i.fa-caret-down,a.card-control>i.fa-caret-up{
 	line-height:7rem;
 	display: none;
 }
+
+
 .consumable-icon{
-	width:200px;
+	width:150px;
 	align-self:center;
 }
 .spell-roll{
@@ -4465,6 +4468,35 @@ html.no-borders #sidebar,html.no-borders #players,html.no-borders #hotbar #actio
 .editor:focus .editor-edit i,.editor:hover .editor-edit i,.journal-entry-page.text:focus .edit-container .editor-edit i,.journal-entry-page.text:hover .edit-container .editor-edit i{
 	font-size:var(--font-size-16)
 }
+
+.foraging-dialog {
+	height: auto;
+	width: auto!important;
+	background-color: black;
+	padding: 20px!important;
+}
+
+
+
+.foraging-dialog .dialog-buttons {
+	display: flex!important;
+}
+
+.foraging-dialog button {
+	margin-bottom: 10px;
+	background-color: white;
+	color: black;
+	font-family: var(--font-primary);
+	font-size: 18px;
+	font-weight: 800;
+}
+
+.foraging-dialog .forage-image {
+	height: auto;
+	width: 200px!important;
+}
+
+
 
 .crafting-dialog {
 	height: auto;

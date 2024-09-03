@@ -5856,9 +5856,9 @@ function handleTravelAction(assignedPartyMemberIds, rollName) {
                     <h4 class="dice-formula">
                         ${actor.name} receives
                     </h4>
-                    <img class="profile-img" src="${itemData.img}" data-edit="img" title="" /> <br> 
+                    <img class="profile-img" style="width: 150px" src="${itemData.img}" data-edit="img" title="" /> <br> 
                      <h4 class="dice-formula">
-                         ${quantity}
+                     ${itemData.name}: ${quantity}
                     </h4>
                 </div>`;
 
@@ -5882,33 +5882,48 @@ function handleTravelAction(assignedPartyMemberIds, rollName) {
 
         const processForageResult = () => {
             if (lastRoll.rolls[0].options.name !== "Forage") return;
-
+        
             let sixCount = lastRoll.rolls[0].dice.reduce((count, die) => {
                 return count + die.results.filter(result => result.result === 6).length;
             }, 0);
-
+        
             if (sixCount > 0) {
                 new Dialog({
                     title: "Forage Result",
                     content: "<p>Choose your reward:</p>",
                     buttons: {
                         herbs: {
-                            label: "Herbs",
+                            label: `<img class="forage-image" src="${getItemImage('SupoqycbuiyAHUL1')}" style=" vertical-align:middle; margin-right:5px;"> <br> Herbs`,
                             callback: () => handleItemReward('SupoqycbuiyAHUL1', sixCount)
                         },
                         vegetables: {
-                            label: "Vegetables",
+                            label: `<img class="forage-image" src="${getItemImage('s6hrxJwz2zsOGBrM')}" style=" vertical-align:middle; margin-right:5px;"> <br> Vegetables`,
                             callback: () => handleItemReward('s6hrxJwz2zsOGBrM', sixCount)
                         },
                         water: {
-                            label: "Water",
-                            callback: () => handleItemReward('', sixCount)
+                            label: `<img class="forage-image" src="systems/forbidden-lands/assets/assorted/water.webp" style=" vertical-align:middle; margin-right:5px;"> <br> Water`,
+                            callback: () => handleItemReward('water-key', sixCount)
                         }
                     },
-                    default: "herbs"
+                    default: ""
+                }, {
+                    resizable: true, // ermöglicht das Resizing des Dialogs
+                    classes: ["foraging-dialog"] // fügt eine benutzerdefinierte Klasse hinzu
                 }).render(true);
             }
         };
+        
+        // Funktion, die das Bild des Items basierend auf dem Key von game.items zurückgibt
+        function getItemImage(itemKey) {
+            const item = game.items.get(itemKey);
+            if (item && item.img) {
+                return item.img;
+            } else {
+                return 'path/to/default-icon.png'; // Standardbild, falls kein Bild vorhanden ist
+            }
+        }
+        
+        
 
         processRollResult("Chop Wood", 'zSA7X1QooILVS69A', 2);
         processRollResult("Fish", 'CXIhgFFaXOa61dtk', 1);
@@ -5918,71 +5933,96 @@ function handleTravelAction(assignedPartyMemberIds, rollName) {
     });
 }
 
+
     
-    
-    function handleItemReward(actor, itemKey, quantity, prefix = "") {
-        if (!actor._pendingRewards) {
-            actor._pendingRewards = [];
-        }
-    
-        let itemData = game.items.get(itemKey);
-        if (!itemData) return;
-    
-        let timeSuffix = itemData.system.time ? ` (${itemData.system.time})` : "";
-        let itemName = `${prefix ? `${prefix} ${itemData.name}` : itemData.name}${timeSuffix}`;
-    
-        let existingItem = null;
-        if (prefix !== "Project") {
-            existingItem = actor.items.find(i => i.name === itemName && i.data.data.shelfLife === itemData.data.data.shelfLife);
-        }
-    
-        if (existingItem) {
-            existingItem.update({ 'data.quantity': existingItem.data.data.quantity + quantity });
-        } else {
-            let newItemData = itemData.toObject();
-            newItemData.name = itemName;  
-            newItemData.data.quantity = quantity;
-    
-            if (prefix === "Project") {
-                newItemData.system.weight = "tiny";
-            }
-    
-            actor.createEmbeddedDocuments('Item', [newItemData]);
-        }
-    
-        actor._pendingRewards.push({ item: itemData, quantity, prefix });
-    
-        if (actor._rewardTimeout) {
-            clearTimeout(actor._rewardTimeout);
-        }
-    
-        actor._rewardTimeout = setTimeout(() => {
-            if (actor._pendingRewards && actor._pendingRewards.length > 0) {
-                let chatMessage = `<div class="dice-roll" style="text-align: center;">
-                                        <h4 class="dice-formula">${actor.name} ${actor._pendingRewards[0].prefix === 'Project' ? 'starts project' : 'receives:'}</h4>`;
-                
-                for (let reward of actor._pendingRewards) {
-                    chatMessage += `
-                    <div style="display: block">
-                        <div style="margin: 10px auto; text-align: center;">
-                            <img class="" src="${reward.item.img}" data-edit="img" title="" style="width: 200px; height: 200px; object-fit: contain;" />
-                            <h4 class="dice-formula" style="margin-top: 10px;">${reward.quantity}</h4>
-                        </div>
-                    </div>`;
-                 
-                }
-    
-                chatMessage += `</div>`;
-    
-                ChatMessage.create({
-                    speaker: ChatMessage.getSpeaker({ actor: actor }),
-                    content: chatMessage
-                });
-    
-                actor._pendingRewards = [];
-            }
-        }, 500); 
+function handleItemReward(actor, itemKey, quantity, prefix = "") {
+    if (!actor._pendingRewards) {
+        actor._pendingRewards = [];
     }
+
+    let itemData = game.items.get(itemKey);
+    if (!itemData) return;
+
+    let timeSuffix = itemData.system.time ? ` (${itemData.system.time})` : "";
+    let itemName = `${prefix ? `${prefix} ${itemData.name}` : itemData.name}${timeSuffix}`;
+
+    let existingItem = null;
+    if (prefix !== "Project") {
+        existingItem = actor.items.find(i => i.name === itemName && i.data.data.shelfLife === itemData.data.data.shelfLife);
+    }
+
+    if (existingItem) {
+        existingItem.update({ 'data.quantity': existingItem.data.data.quantity + quantity });
+    } else {
+        let newItemData = itemData.toObject();
+        newItemData.name = itemName;
+        newItemData.data.quantity = quantity;
+
+        if (prefix === "Project") {
+            newItemData.system.weight = "tiny";
+        }
+
+        actor.createEmbeddedDocuments('Item', [newItemData]);
+    }
+
+    actor._pendingRewards.push({ item: itemData, quantity, prefix });
+
+    // Wenn das Präfix "Project" ist, sofortige Erstellung der Chatnachricht
+    if (prefix === "Project") {
+        let chatMessage = `<div class="dice-roll" style="text-align: center;">
+                            <h4 class="dice-formula">${actor.name} starts project:</h4>`;
+
+        chatMessage += `
+            <div style="display: block">
+                <div style="margin: 10px auto; text-align: center;">
+                    <img class="" src="${itemData.img}" data-edit="img" title="" style="width: 100px; height: 100px; object-fit: contain;" />
+                    <h4 class="dice-formula" style="margin-top: 10px;">${itemData.name}: ${quantity}</h4>
+                </div>
+            </div>`;
+
+        chatMessage += `</div>`;
+
+        ChatMessage.create({
+            speaker: ChatMessage.getSpeaker({ actor: actor }),
+            content: chatMessage
+        });
+
+        actor._pendingRewards = [];
+    } else {
+        // Für andere Belohnungen den Hook verwenden
+        if (!actor._rewardHook) {
+            actor._rewardHook = Hooks.on('diceSoNiceRollComplete', async (messageId) => {
+                if (actor._pendingRewards && actor._pendingRewards.length > 0) {
+                    let chatMessage = `<div class="dice-roll" style="text-align: center;">
+                                        <h4 class="dice-formula">${actor.name} receives:</h4>`;
+                    
+                    for (let reward of actor._pendingRewards) {
+                        chatMessage += `
+                        <div style="display: block">
+                            <div style="margin: 10px auto; text-align: center;">
+                                <img class="" src="${reward.item.img}" data-edit="img" title="" style="width: 100px; height: 100px; object-fit: contain;" />
+                                <h4 class="dice-formula" style="margin-top: 10px;">${reward.item.name}: ${reward.quantity}</h4>
+                            </div>
+                        </div>`;
+                    }
+
+                    chatMessage += `</div>`;
+
+                    ChatMessage.create({
+                        speaker: ChatMessage.getSpeaker({ actor: actor }),
+                        content: chatMessage
+                    });
+
+                    actor._pendingRewards = [];
+                    Hooks.off('diceSoNiceRollComplete', actor._rewardHook);
+                    actor._rewardHook = null;
+                }
+            });
+        }
+    }
+}
+
+
     
     
     function openCraftingDialog(actor) {
