@@ -1,0 +1,13 @@
+<div class="flex column full" style="overflow: hidden auto">
+	<div class="tab-hint">{{localize "FLPS.PARTY.HINT_ASSIGN"}}</div>
+	<form>
+		<button class="reset">{{localize "FLPS.TRAVEL.RESET"}}</button>
+	</form>
+	<ul class="travel-actions">
+		{{#each travelActions as |action|}}
+			<li class="border action-{{action.key}}">
+{{> systems/forbidden-lands/templates/actor/party/components/action-component.hbs assignedCharacters=action.participants action=action }}
+			</li>
+		{{/each}}
+	</ul>
+</div>

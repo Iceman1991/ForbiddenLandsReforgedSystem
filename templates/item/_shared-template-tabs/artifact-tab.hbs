@@ -1,0 +1,48 @@
+<div class="artifact border">
+	{{#unless (eq type "gear")}}
+		{{#if showEffectField}}
+			<div class="effect">
+				<label>{{localize "GEAR.EFFECT"}}</label>
+				{{#if isGM}}
+					<span class="hide-field" data-fieldname="Effect" title="{{localize "ARTIFACT.TOGGLE_VISIBILITY"}}">
+						<i class="fas fa-eye{{#if flags.Effect}}-slash{{/if}}"></i>
+					</span>
+				{{/if}}
+				{{editor system.effect target="system.effect" owner=owner button=true editable=true}}
+			</div>
+		{{/if}}
+	{{/unless}}
+	{{#if showDescriptionField}}
+		<div class="description">
+			<label>{{localize "ARTIFACT.DESCRIPTION"}}</label>
+			{{#if isGM}}
+				<span class="hide-field" data-fieldname="Description" title="{{localize "ARTIFACT.TOGGLE_VISIBILITY"}}">
+					<i class="fas fa-eye{{#if flags.Description}}-slash{{/if}}"></i>
+				</span>
+			{{/if}}
+			{{editor system.description target="system.description" owner=owner button=true editable=true}}
+		</div>
+	{{/if}}
+	{{#if showDrawbackField}}
+		<div class="drawback">
+			<label>{{localize "ARTIFACT.DRAWBACK"}}</label>
+			{{#if isGM}}
+				<span class="hide-field" data-fieldname="Drawback" title="{{localize "ARTIFACT.TOGGLE_VISIBILITY"}}">
+					<i class="fas fa-eye{{#if flags.Drawback}}-slash{{/if}}"></i>
+				</span>
+			{{/if}}
+			{{editor system.drawback target="system.drawback" owner=owner button=true editable=true}}
+		</div>
+	{{/if}}
+	{{#if showAppearanceField}}
+		<div class="appearance">
+			<label>{{localize "ARTIFACT.APPEARANCE"}}</label>
+			{{#if isGM}}
+				<span class="hide-field" data-fieldname="Appearance" title="{{localize "ARTIFACT.TOGGLE_VISIBILITY"}}">
+					<i class="fas fa-eye{{#if flags.Appearance}}-slash{{/if}}"></i>
+				</span>
+			{{/if}}
+			{{editor system.appearance target="system.appearance" owner=owner button=true editable=true}}
+		</div>
+	{{/if}}
+</div>

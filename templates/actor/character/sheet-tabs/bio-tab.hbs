@@ -1,0 +1,44 @@
+<div class="bio-tab border">
+	<div class="section">
+		<h2 style="display: flex;justify-content: center;">
+			<button
+				type="button"
+				class="roll-pride flex row align-center"
+				data-tooltip="{{localize 'DICE.ROLL'}} {{localize system.bio.pride.label}}"
+			>
+				<i class="fas fa-dice"></i>{{localize "HEADER.PRIDE"}}
+			</button>
+		</h2>
+		{{editor system.bio.pride.value target="system.bio.pride.value" owner=owner button=true editable=true}}
+	</div>
+	<div class="section">
+		<h2>
+			{{localize "HEADER.DARK_SECRET"}}
+		</h2>
+		{{editor
+			system.bio.darkSecret.value
+			target="system.bio.darkSecret.value"
+			owner=owner
+			button=true
+			editable=true
+		}}
+	</div>
+	<div class="section">
+		<h2>
+			{{localize "HEADER.FACE"}}
+		</h2>
+		{{editor system.bio.face.value target="system.bio.face.value" owner=owner button=true editable=true}}
+	</div>
+	<div class="section">
+		<h2>
+			{{localize "HEADER.BODY"}}
+		</h2>
+		{{editor system.bio.body.value target="system.bio.body.value" owner=owner button=true editable=true}}
+	</div>
+	<div class="section">
+		<h2>
+			{{localize "HEADER.CLOTHING"}}
+		</h2>
+		{{editor system.bio.clothing.value target="system.bio.clothing.value" owner=owner button=true editable=true}}
+	</div>
+</div>

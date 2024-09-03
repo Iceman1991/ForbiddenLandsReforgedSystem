@@ -1,0 +1,29 @@
+<form class="{{cssClass}}" autocomplete="off">
+	<div class="header border">
+		<div class="avatar">
+			<img class="profile-img" src="{{img}}" data-edit="img" title="{{name}}" />
+		</div>
+		<div class="header-stats">
+			<div class="name" style="grid-column: 1/-1">
+				<label>{{localize "GEAR.NAME"}}</label>
+				<input name="name" type="text" value="{{name}}" />
+			</div>
+			<div class="supply">
+				<label>{{localize "HIRELING.SUPPLY"}}</label>
+				<input name="system.supply" type="text" value="{{system.supply}}" />
+			</div>
+			<div class="salary">
+				<label>{{localize "HIRELING.SALARY"}}</label>
+				<input name="system.salary" type="text" value="{{system.salary}}" />
+			</div>
+			<div class="salary">
+				<label>{{localize "HIRELING.PRODUCTION"}}</label>
+				<input name="system.production" type="text" value="{{system.production}}" />
+			</div>
+		</div>
+	</div>
+	<div class="hireling-description">
+		<label>{{localize "HIRELING.DESCRIPTION"}}</label>
+		{{editor system.description target="system.description" owner=owner button=true editable=true}}
+	</div>
+</form>

@@ -1,0 +1,86 @@
+<form class="{{cssClass}}" autocomplete="off">
+	<div class="stronghold">
+		<div class="bio border">
+			<div class="flex row align-center space-between">
+				<div class="avatar">
+					<img  class="profile-img" src="{{img}}" data-edit="img" title="{{name}}" />
+				</div>
+				<div class="flex column">
+					<div class="name">
+						<label>{{localize "BIO.NAME"}}:</label>
+						<input name="name" type="text" value="{{name}}" />
+					</div>
+					<div class="bio-row">
+						<div class="location">
+							<label>{{localize "STRONGHOLD.LOCATION"}}:</label>
+							<input name="system.location" type="text" value="{{system.location}}" />
+						</div>
+						<div class="defense-rating">
+							<label>{{localize "STRONGHOLD.DEFENSE_RATING"}}:</label>
+							<input
+								name="system.defenseRating"
+								type="number"
+								value="{{system.defenseRating}}"
+								data-dtype="Number"
+							/>
+						</div>
+						
+					</div>
+					<div class="flex">
+						<div class="defense-rating">
+							<label>{{localize "STRONGHOLD.HOUSING"}}:</label>
+							<input
+								name="system.housing"
+								type="number"
+								value="{{system.housing}}"
+								data-dtype="Number"
+							/>
+						</div>
+						<div class="defense-rating">
+							<label>{{localize "STRONGHOLD.DAYSALIVE"}}:</label>
+							<input
+								name="system.daysalive"
+								type="number"
+								value="{{system.daysalive}}"
+								data-dtype="Number"
+							/>
+						</div>
+						<div class="defense-rating">
+							<label>{{localize "STRONGHOLD.REPUTATION"}}:</label>
+							<input
+								name="system.reputation"
+								type="number"
+								value="{{system.reputation}}"
+								data-dtype="Number"
+							/>
+						</div>
+						
+					</div>
+					
+				</div>
+			</div>
+		</div>
+
+		<div class="sheet-tabs tabs flex row" data-group="primary">
+			<b class="tab-item" data-tab="building">{{localize "TAB.BUILDING"}}</b>
+			<b class="tab-item" data-tab="hireling">{{localize "TAB.HIRELING"}}</b>
+			<b class="tab-item" data-tab="gear">{{localize "TAB.GEAR"}}</b>
+			<b class="tab-item" data-tab="note">{{localize "TAB.NOTE"}}</b>
+		</div>
+
+		<div class="sheet-body">
+			<div class="tab" data-group="primary" data-tab="building">
+{{> systems/forbidden-lands/templates/actor/stronghold/sheet-tabs/building-tab.hbs}}
+			</div>
+			<div class="tab" data-group="primary" data-tab="hireling">
+{{> systems/forbidden-lands/templates/actor/stronghold/sheet-tabs/hireling-tab.hbs}}
+			</div>
+			<div class="tab" data-group="primary" data-tab="gear">
+{{> systems/forbidden-lands/templates/actor/stronghold/sheet-tabs/gear-tab.hbs}}
+			</div>
+			<div class="tab note" data-group="primary" data-tab="note">
+{{editor system.description target="system.description" button=true owner=owner editable=true}}
+			</div>
+		</div>
+	</div>
+</form>

@@ -1,0 +1,31 @@
+<form class="{{cssClass}}" autocomplete="off">
+	<div class="header border">
+		<div class="avatar">
+			<img class="profile-img" src="{{img}}" data-edit="img" title="{{name}}" />
+		</div>
+		<div class="header-stats">
+			<label>{{localize "CRITICAL_INJURY.NAME"}}</label>
+			<input name="name" type="text" value="{{name}}" />
+			<label>{{localize "CRITICAL_INJURY.LETHAL"}}</label>
+			<select name="system.lethal">
+				{{#select system.lethal}}
+				<option value="no">{{localize "LETHAL.NO"}}</option>
+				<option value="yes">{{localize "LETHAL.YES"}}</option>
+				{{/select}}
+			</select>
+			{{#if lethal}}
+			<label>{{localize "CRITICAL_INJURY.LIMIT"}}</label>
+			<input name="system.limit" type="text" value="{{system.limit}}" />
+			{{/if}}
+			<label>{{localize "CRITICAL_INJURY.HEALING_TIME"}}</label>
+			<input name="system.healingTime" type="text" value="{{system.healingTime}}" />
+		</div>
+	</div>
+	<div class="item">
+		<div class="effect">
+			<label>{{localize "GEAR.EFFECT"}}</label>
+			{{editor system.effect target="system.effect" owner=owner button=true editable=true}}
+		</div>
+{{> systems/forbidden-lands/templates/components/modifiers-component.hbs }}
+	</div>
+</form>

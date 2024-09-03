@@ -1,0 +1,64 @@
+<form class="{{cssClass}}" autocomplete="off">
+	<div class="character">
+		<div class="bio border">
+			<div class="flex row align-center space-between">
+				<div class="avatar">
+					<img class="profile-img" src="{{img}}" data-edit="img" title="{{name}}" />
+				</div>
+				<table>
+					<tr>
+						<td>
+							<label>
+								{{localize "BIO.NAME"}}:
+							</label>
+						</td>
+						<td colspan="3">
+							<input class="name" name="name" type="text" value="{{name}}" />
+						</td>
+						<td>
+							<label>
+								{{localize system.bio.kin.label}}:
+							</label>
+						</td>
+						<td>
+							???
+						</td>
+					</tr>
+					<tr>
+						<td>
+							<label>
+								{{localize system.bio.age.label}}:
+							</label>
+						</td>
+						<td>
+							???
+						</td>
+						<td>
+							<label>
+								{{localize system.bio.reputation.label}}:
+							</label>
+						</td>
+						<td>
+							???
+						</td>
+						<td>
+							<label>
+								{{localize system.bio.profession.label}}:
+							</label>
+						</td>
+						<td>
+							???
+						</td>
+					</tr>
+				</table>
+			</div>
+		</div>
+		<div class="sheet-body">
+			<div class="margin padding">
+				<!-- prettier-ignore -->
+				{{! prettier-ignore }}
+				{{editor system.bio.note.value target="system.bio.note.value"}}
+			</div>
+		</div>
+	</div>
+</form>

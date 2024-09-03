@@ -1,0 +1,29 @@
+<div class="dice-infos">
+	{{#if roll.pushed}}
+	{{#if (and roll.attributeTrauma attributeLabel)}}
+	<div class="dice-info">
+		<span class="result">
+			{{roll.attributeTrauma}}
+		</span>
+		<span class="label">
+			&nbsp;{{localize "ROLL.APPLIED_TRAUMA"}}&nbsp;{{localize attributeLabel}}
+		</span>
+	</div>
+	{{/if}}
+
+	{{#if (and roll.gearDamage gears)}}
+	{{#each gears as |gear|}}
+	{{#if gear.value}}
+	<div class="dice-info">
+		<span class="result">
+			{{gear.value}}
+		</span>
+		<span class="label">
+			&nbsp;{{localize "ROLL.APPLIED_TRAUMA"}}&nbsp;{{localize gear.name}}
+		</span>
+	</div>
+	{{/if}}
+	{{/each}}
+	{{/if}}
+	{{/if}}
+</div>

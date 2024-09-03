@@ -1,0 +1,115 @@
+{
+	"id": "forbidden-lands",
+	"name": "forbidden-lands",
+	"title": "Forbidden Lands Reforged",
+	"description": "Reforged",
+	"version": "13.0.1",
+	"authors": [
+		{
+			"name": "aMediocreDad",
+			"discord": "aMedicoreDad",
+			"email": "hello@amediocre.dev",
+			"url": "https://amediocre.dev"
+		}
+	],
+	"compatibility": {
+		"minimum": "11",
+		"verified": "12",
+		"maximum": "12"
+	},
+	"contributors": "perfectro, patrys, Maxter, jimorie, giant-teapot, romelwell, roonel, moo-man, lasseborly, narukaioh, Cussa",
+	"localization": " ptosekigloo, ptoseklukas, Bapf, OnkelRod, sebastiansIT, Tobbot, GeneralMine, DavidCMeier, KaWeNGoD, ismail-ahmed, cyberdwarf1664, Zhikann, franklinbenini, DenninDalke, luizbgomide, igorteuri, trprado, SwedishRabbit, Rosataker, Dran82",
+	"bugs": "https://github.com/fvtt-fria-ligan/forbidden-lands-foundry-vtt/issues",
+	"media": [
+		{
+			"type": "cover",
+			"url": "https://user-images.githubusercontent.com/9851733/108728684-1a954b00-752a-11eb-9138-6fab6f83b2a8.jpg"
+		},
+		{
+			"type": "screenshot",
+			"url": "https://user-images.githubusercontent.com/9851733/115126329-9cf03780-9fce-11eb-953f-96cc54a097c4.png"
+		}
+	],
+	"esmodules": ["forbidden-lands.js"],
+	"styles": ["forbidden-lands.css"],
+	"languages": [
+		{
+			"lang": "cs",
+			"name": "Čeština",
+			"path": "lang/cs.json"
+		},
+		{
+			"lang": "de",
+			"name": "Deutsch",
+			"path": "lang/de.json"
+		},
+		{
+			"lang": "en",
+			"name": "English",
+			"path": "lang/en.json"
+		},
+		{
+			"lang": "es",
+			"name": "Español",
+			"path": "lang/es.json"
+		},
+		{
+			"lang": "fr",
+			"name": "Français",
+			"path": "lang/fr.json"
+		},
+		{
+			"lang": "it",
+			"name": "Italiano",
+			"path": "lang/it.json"
+		},
+		{
+			"lang": "pt-BR",
+			"name": "Português Brasileiro",
+			"path": "lang/pt-br.json"
+		},
+		{
+			"lang": "sv",
+			"name": "Svenska",
+			"path": "lang/sv.json"
+		},
+		{
+			"lang": "zh-TW",
+			"name": "正體中文",
+			"path": "lang/zh-TW.json"
+		}
+	],
+	"flags": {
+		"hotReload": {
+			"extensions": ["css", "hbs", "json"],
+			"paths": ["forbidden-lands.css", "templates", "lang"]
+		},
+		"allowBugReporter": true
+	},
+	"relationships": {
+		"requires": [
+			{
+				"id": "yze-combat",
+				"type": "module",
+				"manifest": "https://github.com/fvtt-fria-ligan/yearzero-combat-fvtt/releases/latest/download/module.json",
+				"compatibility": {
+					"verified": "1.2.2"
+				}
+			}
+		]
+	},
+	"grid": {
+		"distance": 1,
+		"units": "m"
+	},
+	"gridDistance": 1,
+	"gridUnits": "m",
+	"background": "systems/forbidden-lands/assets/splash-page.jpg",
+	"primaryTokenAttribute": "attribute.strength",
+	"secondaryTokenAttribute": "bio.willpower",
+	"socket": true,
+	"url": "https://github.com/fvtt-fria-ligan/forbidden-lands-foundry-vtt",
+	"manifest": "https://raw.githubusercontent.com/fvtt-fria-ligan/forbidden-lands-foundry-vtt/main/system.json",
+	"download": "https://github.com/fvtt-fria-ligan/forbidden-lands-foundry-vtt/releases/download/v12.0.0/forbidden-lands.zip",
+	"license": "LICENSE"
+}

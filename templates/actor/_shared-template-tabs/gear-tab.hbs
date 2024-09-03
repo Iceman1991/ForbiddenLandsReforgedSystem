@@ -1,0 +1,156 @@
+<!-- Inline Partials -->
+{{#*inline "table" gear state collapsed}}
+	<table data-state="{{state}}">
+		<thead>
+			<th class="profile">
+				<span class="count" data-tooltip="{{localize "GEAR.COUNT"}}">{{count (lookup gear state)}}</span>
+				<button type="button" class="collapse-table" title="{{localize 'HEADER.COLLAPSE'}}"
+					{{ternary (eq state 'none') 'disabled' ''}}><i
+						class="fas fa-caret-{{ternary collapsed "right" "down"}}"></i></button>
+				{{fblLocalize 'GEAR' @root.type state }}<button type="button" class="header-sort" data-sort="name" title="{{localize "GEAR.SORT"}}"><i
+						class="fas fa-sort"></i></button>
+			</th>
+			<th><span>{{localize "GEAR.TYPE"}}</span><button type="button" class="header-sort" data-sort="type" title="{{localize "GEAR.SORT"}}"><i
+						class="fas fa-sort"></i></button></th>
+			<th><span>{{localize "GEAR.ATTRIBUTE"}}</span><button type="button" class="header-sort"
+					data-sort="attribute" title="{{localize "GEAR.SORT"}}"><i class="fas fa-sort"></i></button></th>
+			<th><span>{{localize "GEAR.WEIGHT"}}</span><button type="button" class="header-sort" data-sort="weight" title="{{localize "GEAR.SORT"}}"><i
+						class="fas fa-sort"></i></button></th>
+			<th><button type="button" class="create-dialog"><i class="fas fa-plus"></i></button></th>
+		</thead>
+		{{#unless collapsed}}
+			<tbody>
+				{{#each (lookup gear state) as |item|}}
+					<tr class="item" data-item-id="{{item._id}}">
+						<td class="profile">
+							<img src="{{item.img}}" width="32px" />
+							<span class="name">{{item.name}}</span>
+						</td>
+						<td>{{fblLocalize item.type}}</td>
+						{{#if (eq item.type 'rawMaterial')}}
+							<td><input class="quantity" type="number" data-dtype="Number" value="{{item.system.quantity}}"
+									title="{{localize "ITEM.QUANTITY"}}" /></td>
+						{{else}}
+							<td class="{{isBroken item}}"
+								title="{{localize (ternary (eq item.type 'armor') "ARMOR.RATING"  "GEAR.BONUS")}}">
+								{{item.system.bonus.value}}
+							</td>
+						{{/if}}
+						<td>{{itemWeight item.system.weight}}</td>
+						<td>
+							<button type="button" class="item-control item-edit" title="{{localize "GEAR.EDIT"}}"><i
+									class="fas fa-edit"></i></button>
+							<button type="button" class="item-control item-post" title="{{localize "GEAR.POST"}}"><i
+									class="fas fa-comment"></i></button>
+                                    <button type="button" class="item-control item-transfer" title="{{localize "GEAR.POST"}}"><i
+									class="fas fa-right-left"></i></button>
+							<button type="button" class="item-control item-delete" title="{{localize "GEAR.DELETE"}}"><i
+									class="fas fa-trash"></i></button>
+						</td>
+					</tr>
+				{{/each}}
+			</tbody>
+		{{/unless}}
+	</table>
+{{/inline}}
+
+{{#*inline "currency" object currency}}
+	<label>{{localize object.label}}:</label>
+	 
+	<input name="system.currency.{{currency}}.value" min="0" type="number" data-dtype="Number" value="{{object.value}}" />
+	
+{{/inline}}
+
+<!-- Tab markup -->
+<div class="gear-tab">
+    {{#unless (eq type 'monster')}}
+    <div class="currencies border">
+        <div class="header flex grow row">
+            <b>{{localize "HEADER.CURRENCY"}}</b>
+            <div class="values">
+                {{#each system.currency as |object currency|}}
+                    {{> currency object=object currency=currency}}
+                {{/each}}
+            </div>
+        </div>
+    </div>
+    {{/unless}}
+    <section class="gears">
+        <nav class="controls">
+            <button type="button" class="control-gear" data-direction="" title="{{localize "GEAR.DROP"}}"><i class="fas fa-caret-square-down"></i></button>
+            <button type="button" class="control-gear" data-direction="carried" title="{{localize "GEAR.PICK_UP"}}"><i class="fas fa-caret-square-up"></i></button>
+            {{#if (eq system.type 'mount')}}
+            <a class="change-mounted" data-attribute="{{system.isMounted}}" title="{{localize 'GEAR.MOUNTED'}}">
+                <i class="fas fa-horse"></i>
+                <i class="far {{#if system.isMounted}}fa-check-circle{{else}}fa-circle{{/if}}"></i>
+            </a>
+            {{/if}}
+            <div class="encumbrance{{#if system.encumbrance.over}} overencumbered{{/if}}"
+                title="{{localize "ENCUMBRANCE" }}">
+                <i class="fas fa-weight-hanging"></i> {{system.encumbrance.value}} /
+                {{system.encumbrance.max}}
+            </div>
+        </nav>
+        <div class="item-list">
+            <div class="items">
+                {{#each carriedStates as |state|}}
+                    {{> table gear=../gear state=state.name collapsed=state.collapsed}}
+                {{/each}}
+                {{> table gear=gear state="none"}}
+            </div>
+        </div>
+    </section>
+
+    {{#unless (or (eq system.subtype.type "npc") (eq type 'monster'))}}
+    <div class="consumables border">
+        {{#each system.consumable as |consumable key|}}
+            <div class="consumable">
+                <button type="button" class="roll-consumable"
+                    data-consumable="{{key}}">
+                    <div class="consumabletext">
+                        {{localize consumable.label}}
+                    </div>
+                    <img class="consumableimg" src="systems/forbidden-lands/assets/assorted/{{localize consumable.label}}.webp" alt="">
+                </button>
+                <select class="consumableselector" name="system.consumable.{{key}}.value" data-dtype="Number">
+                    {{#select consumable.value}}
+                        <option value="0">Empty</option>
+                        <option value="1">Almost Empty</option>
+                        <option value="2">Half</option>
+                        <option value="3">Almost Full</option>
+                        <option value="4">Full</option>
+                    {{/select}}
+                </select>
+            </div>
+        {{/each}}
+    </div>
+	  <!-- Toggle button at the bottom -->
+    <button id="toggle-consumables" type="button" class="toggle-button">
+        Toggle Consumables
+    </button>
+    {{/unless}}
+
+  
+</div>
+
+
+<script>
+	document.getElementById('toggle-consumables').addEventListener('click', function() {
+    const consumablesSection = document.querySelector('.consumables.border');
+    if (consumablesSection.style.display === 'none' || !consumablesSection.style.display) {
+        consumablesSection.style.display = 'flex';
+    } else {
+        consumablesSection.style.display = 'none';
+    }
+});
+
+</script>
+
+<style>
+
+.consumabletext {
+	display: none;
+}
+
+	
+</style>

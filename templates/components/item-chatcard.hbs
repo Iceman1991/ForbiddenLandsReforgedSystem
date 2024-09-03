@@ -1,0 +1,361 @@
+<div class="forbidden-lands chat-item">
+	<div class="border">
+		<div class="link-header">
+			<h3>
+				{{name}}
+			</h3>
+		</div>
+		{{#if isArmor}}
+			<h4>
+				{{armorPart system.part}}
+			</h4>
+		{{/if}}
+		{{#if isBuilding}}
+			<h4>
+				{{localize "ITEM.TypeBuilding"}}
+			</h4>
+		{{/if}}
+		{{#if isCriticalInjury}}
+			<h4>
+				{{localize "ITEM.TypeCriticalinjury"}}
+			</h4>
+		{{/if}}
+		{{#if isGear}}
+			<h4>
+				{{localize "ITEM.TypeGear"}}
+			</h4>
+		{{/if}}
+		{{#if isHireling}}
+			<h4>
+				{{localize "ITEM.TypeHireling"}}
+			</h4>
+		{{/if}}
+		{{#if isMonsterAttack}}
+			<h4>
+				{{localize "ITEM.TypeMonsterattack"}}
+			</h4>
+		{{/if}}
+		{{#if isRawMaterial}}
+			<h4>
+				{{localize "ITEM.TypeRawmaterial"}}
+			</h4>
+		{{/if}}
+		{{#if isSpell}}
+			<h4>
+				{{localize system.spellType}}
+			</h4>
+		{{/if}}
+		{{#if isTalent}}
+			<h4>
+				{{localize "ITEM.TypeTalent"}}
+			</h4>
+		{{/if}}
+		{{#if isWeapon}}
+			<h4>
+				{{weaponCategory system.category}},
+				{{weaponGrip system.grip}}
+			</h4>
+		{{/if}}
+
+		{{#if img}}
+			<img src="{{img}}" title="{{name}}" />
+		{{/if}}
+
+		{{#if system.artifactBonus}}
+			<p>
+				<strong>
+					{{localize "ARTIFACT.ARTIFACT_BONUS"}}:
+				</strong>
+				{{system.artifactBonus}}
+			</p>
+		{{/if}}
+
+		{{#if isArmor}}
+			<p>
+				<strong>
+					{{localize "ARMOR.RATING"}}:
+				</strong>
+				{{system.bonus.value}}
+			</p>
+			{{#if system.features}}
+				<p>
+					<strong>
+						{{localize "WEAPON.FEATURE"}}:
+					</strong>
+					{{{system.features}}}
+				</p>
+			{{/if}}
+			{{#if system.effect}}
+				<p>
+					<strong>
+						{{localize "GEAR.EFFECT"}}:
+					</strong>
+					{{{system.effect}}}
+				</p>
+			{{/if}}
+		{{/if}}
+
+		{{#if isBuilding}}
+			<p>
+				<strong>
+					{{localize "BUILDING.REPUTATION"}}:
+				</strong>
+				{{system.reputation}}
+			</p>
+			<p>
+				<strong>
+					{{localize "BUILDING.NUMBER"}}:
+				</strong>
+				{{system.number}}
+			</p>
+			{{#if system.description}}
+				<p>
+					{{{system.description}}}
+				</p>
+			{{/if}}
+			{{#if system.effect}}
+				<p>
+					<strong>
+						{{localize "GEAR.EFFECT"}}:
+					</strong>
+					{{{system.effect}}}
+				</p>
+			{{/if}}
+		{{/if}}
+
+		{{#if isCriticalInjury}}
+			<p>
+				<strong>
+					{{localize "CRITICAL_INJURY.LETHAL"}}:
+				</strong>
+				{{system.lethal}}
+			</p>
+			{{#if system.limit}}
+				<p>
+					<strong>
+						{{localize "CRITICAL_INJURY.LIMIT"}}:
+					</strong>
+					<span data-type="limit">
+						{{system.limit}}
+					</span>
+				</p>
+			{{/if}}
+			{{#if system.healingTime}}
+				<p>
+					<strong>
+						{{localize "CRITICAL_INJURY.HEALING_TIME"}}:
+					</strong>
+
+					<span data-type="healtime">
+						{{system.healingTime}}
+					</span>
+				</p>
+			{{/if}}
+			{{#if system.effect}}
+				<p>
+					<strong>
+						{{localize "GEAR.EFFECT"}}:
+					</strong>
+					{{{system.effect}}}
+				</p>
+			{{/if}}
+		{{/if}}
+
+		{{#if isGear}}
+			{{#if showField.effect}}
+				<p>
+					<strong>
+						{{localize "GEAR.EFFECT"}}:
+					</strong>
+					{{{system.effect}}}
+				</p>
+			{{/if}}
+		{{/if}}
+
+		{{#if isHireling}}
+			<p>
+				<strong>
+					{{localize "HIRELING.SALARY"}}:
+				</strong>
+				{{system.salary}}
+			</p>
+			<p>
+				<strong>
+					{{localize "HIRELING.NUMBER"}}:
+				</strong>
+				{{system.number}}
+			</p>
+			{{#if system.description}}
+				<p>
+					{{{system.description}}}
+				</p>
+			{{/if}}
+		{{/if}}
+
+		{{#if isMonsterAttack}}
+			{{#if system.description}}
+				<p>
+					{{{system.description}}}
+				</p>
+			{{/if}}
+			<strong>{{localize "MONSTER.DICE"}}</strong>:
+			{{data.dice}}
+			<br />
+			<strong>{{localize "MONSTER.DAMAGE"}}</strong>:
+			{{data.damage}}
+			<br />
+			<strong>{{localize "MONSTER.RANGE"}}</strong>:
+			{{data.range}}
+			<br />
+			<strong>{{localize "MONSTER.DAMAGE_TYPE"}}</strong>:
+			{{data.damageType}}
+		{{/if}}
+
+		{{#if isRawMaterial}}
+			<p>
+				<strong>
+					{{localize "RAW_MATERIAL.SHELF_LIFE"}}:
+				</strong>
+				{{system.shelfLife}}
+			</p>
+		{{/if}}
+
+		{{#if isSpell}}
+			<p>
+				<strong>
+					{{localize "SPELL.RANK"}}:
+				</strong>
+				{{system.rank}}
+			</p>
+			<p>
+				<strong>
+					{{localize "SPELL.RANGE"}}:
+				</strong>
+				{{system.range}}
+			</p>
+			<p>
+				<strong>
+					{{localize "SPELL.DURATION"}}:
+				</strong>
+				{{system.duration}}
+			</p>
+			{{#if system.ingredient}}
+				<p>
+					<strong>
+						{{localize "SPELL.INGREDIENT"}}:
+					</strong>
+					{{system.ingredient}}
+				</p>
+			{{/if}}
+			{{#if system.description}}
+				<p>
+					{{{system.description}}}
+				</p>
+			{{/if}}
+		{{/if}}
+
+		{{#if isTalent}}
+			{{#if system.type}}
+				<p>
+					<strong>
+						{{localize "TALENT.TYPE"}}:
+					</strong>
+					{{talentType system.type}}
+				</p>
+			{{/if}}
+			{{#unless (eq system.type "kin")}}
+				<p>
+					<strong>
+						{{localize "TALENT.RANK"}}:
+					</strong>
+					{{system.rank}}
+				</p>
+			{{/unless}}
+			{{#if system.description}}
+				<p>
+					{{{system.description}}}
+				</p>
+			{{/if}}
+		{{/if}}
+
+		{{#if isWeapon}}
+			<p>
+				<strong>
+					{{localize "WEAPON.BONUS"}}:
+				</strong>
+				{{system.bonus.value}}
+			</p>
+			<p>
+				<strong>
+					{{localize "WEAPON.DAMAGE"}}:
+				</strong>
+				{{system.damage}}
+			</p>
+			<p>
+				<strong>
+					{{localize "WEAPON.RANGE"}}:
+				</strong>
+				{{weaponRange system.range}}
+			</p>
+			{{#if (hasWeaponFeatures system.category system.features)}}
+				<p>
+					<strong>
+						{{localize "WEAPON.FEATURES.TITLE"}}:
+					</strong>
+					{{formatWeaponFeatures system.category system.features}}
+				</p>
+			{{/if}}
+			{{#if showField.effect}}
+				<p>
+					<strong>
+						{{localize "GEAR.EFFECT"}}:
+					</strong>
+					{{{system.effect}}}
+				</p>
+			{{/if}}
+		{{/if}}
+		{{#if system.artifactBonus}}
+			{{#if showField.appearance}}
+				<p>
+					<strong>
+						{{localize "ARTIFACT.APPEARANCE"}}:
+					</strong>
+					{{{system.appearance}}}
+				</p>
+			{{/if}}
+			{{#if showField.description}}
+				<p>
+					<strong>
+						{{localize "ARTIFACT.DESCRIPTION"}}:
+					</strong>
+					{{{system.description}}}
+				</p>
+			{{/if}}
+			{{#if showField.drawback}}
+				<p>
+					<strong>
+						{{localize "ARTIFACT.DRAWBACK"}}:
+					</strong>
+					{{{system.drawback}}}
+				</p>
+			{{/if}}
+		{{/if}}
+		{{#if system.weight}}
+			<p>
+				<strong>
+					{{localize "GEAR.WEIGHT"}}:
+				</strong>
+				{{itemWeight system.weight}}
+			</p>
+		{{/if}}
+
+		{{#if hasRollModifiers}}
+			<p>
+				<strong>
+					{{localize "ITEM.ROLL_MODIFIERS"}}:
+				</strong>
+				{{formatRollModifiers system.rollModifiers}}
+			</p>
+		{{/if}}
+	</div>
+</div>
