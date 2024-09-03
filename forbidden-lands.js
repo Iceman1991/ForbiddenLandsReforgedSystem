@@ -6001,7 +6001,7 @@ function handleTravelAction(assignedPartyMemberIds, rollName) {
                     callback: () => openExistingProjectDialog(actor)
                 },
                 close: {
-                    label: "Close",
+                    label: "Cancel",
                 }
             },
             default: ""
@@ -6050,7 +6050,7 @@ function handleTravelAction(assignedPartyMemberIds, rollName) {
                     disabled: false
                 },
                 close: {
-                    label: "Close",
+                    label: "Cancel",
                 }
             },
             render: (html) => {
@@ -6201,7 +6201,7 @@ function handleTravelAction(assignedPartyMemberIds, rollName) {
                 </div>`,
             buttons: {
                 close: {
-                    label: "Close",
+                    label: "Cancel",
                 }
             },
             render: (html) => {
