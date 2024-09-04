@@ -4322,17 +4322,23 @@
                                         itemData.data.quantity = transferQuantity;
                                     }
             
-                                    // Prüfen, ob im Ziel-Actor bereits ein Item mit dem gleichen Namen und shelflife existiert
-                                    let existingItem = targetActor.items.find(i => i.name === item.name && i.system.shelfLife === item.system.shelfLife);
-            
-                                    if (existingItem) {
-                                        // Falls ein solches Item existiert, die Quantity addieren
-                                        await targetActor.updateEmbeddedDocuments("Item", [{
-                                            _id: existingItem.id,
-                                            "data.quantity": existingItem.data.data.quantity + transferQuantity
-                                        }]);
+                                    // Prüfung nur bei rawmaterials
+                                    if (item.type === "rawmaterials") {
+                                        // Prüfen, ob im Ziel-Actor bereits ein Item mit dem gleichen Namen und shelflife existiert
+                                        let existingItem = targetActor.items.find(i => i.name === item.name && i.system.shelfLife === item.system.shelfLife);
+                                        
+                                        if (existingItem) {
+                                            // Falls ein solches Item existiert, die Quantity addieren
+                                            await targetActor.updateEmbeddedDocuments("Item", [{
+                                                _id: existingItem.id,
+                                                "data.quantity": existingItem.data.data.quantity + transferQuantity
+                                            }]);
+                                        } else {
+                                            // Andernfalls das Item als neues Item hinzufügen
+                                            await targetActor.createEmbeddedDocuments("Item", [itemData]);
+                                        }
                                     } else {
-                                        // Andernfalls das Item als neues Item hinzufügen
+                                        // Bei allen anderen Item-Typen einfach ein neues Item hinzufügen
                                         await targetActor.createEmbeddedDocuments("Item", [itemData]);
                                     }
             
@@ -4375,6 +4381,7 @@
                     default: "transfer"
                 }).render(true);
             }),
+            
                   
             
             
@@ -7552,7 +7559,7 @@ function openRationDistributionDialog(rationsCooked, folderSpieler) {
         // Stelle sicher, dass der Button nur einmal hinzugefügt wird
         if (!html.closest('.window-app').find('.manage-pin').length) {
             // Button für PIN-Verwaltung hinzufügen
-            const managePinButton = `<a class="manage-pin" title="PIN verwalten"><i class="fas fa-lock"></i> PIN verwalten</a>`;
+            const managePinButton = `<a class="header-button control manage-pin" title="PIN verwalten"><i class="fas fa-lock"></i> PIN verwalten</a>`;
             html.closest('.window-app').find('.window-title').after(managePinButton);
         }
     
@@ -7581,7 +7588,8 @@ function openRationDistributionDialog(rationsCooked, folderSpieler) {
                     html.find('#set-pin').click(async () => {
                         let setPinDialog = new Dialog({
                             title: "PIN setzen",
-                            content: `<p>Bitte gib einen neuen PIN-Code ein:</p><input type="password" id="new-pin-input" placeholder="PIN-Code eingeben">`,
+                            content: `<p>Bitte gib einen neuen PIN-Code ein:</p>
+                                      <input type="password" id="new-pin-input" placeholder="PIN-Code eingeben" autocomplete="off">`,
                             buttons: {
                                 submit: {
                                     icon: "<i class='fas fa-check'></i>",
@@ -7604,13 +7612,14 @@ function openRationDistributionDialog(rationsCooked, folderSpieler) {
                         });
                         setPinDialog.render(true);
                     });
-    
+                
                     html.find('#change-pin').click(async () => {
                         if (!actor.getFlag('world', 'pinCode')) return;
-    
+                
                         let changePinDialog = new Dialog({
                             title: "PIN ändern",
-                            content: `<p>Bitte gib einen neuen PIN-Code ein:</p><input type="password" id="new-pin-input" placeholder="Neuen PIN-Code eingeben">`,
+                            content: `<p>Bitte gib einen neuen PIN-Code ein:</p>
+                                      <input type="password" id="new-pin-input" placeholder="Neuen PIN-Code eingeben" autocomplete="off">`,
                             buttons: {
                                 submit: {
                                     icon: "<i class='fas fa-check'></i>",
@@ -7633,10 +7642,10 @@ function openRationDistributionDialog(rationsCooked, folderSpieler) {
                         });
                         changePinDialog.render(true);
                     });
-    
+                
                     html.find('#remove-pin').click(async () => {
                         if (!actor.getFlag('world', 'pinCode')) return;
-    
+                
                         let confirmationDialog = new Dialog({
                             title: "PIN entfernen",
                             content: `<p>Bist du sicher, dass du den PIN-Code entfernen möchtest? Dies wird den Schutz des Actor Sheets aufheben.</p>`,
@@ -7658,6 +7667,7 @@ function openRationDistributionDialog(rationsCooked, folderSpieler) {
                         confirmationDialog.render(true);
                     });
                 }
+                
             }).render(true);
         });
     
