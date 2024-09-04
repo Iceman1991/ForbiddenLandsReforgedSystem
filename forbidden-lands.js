@@ -4839,7 +4839,7 @@
                 },
                 rolls = [];
         
-            if (identifier === "food" || identifier === "water" || identifier === "hygiene") {
+            if (identifier === "food" || identifier === "water") {
                 rolls.push(FBLRoll.create(`${dice}[${rollName}]`, {}, options));
             } else {
                 dice = CONFIG.fbl.consumableDiceTorches[consumable.value],
