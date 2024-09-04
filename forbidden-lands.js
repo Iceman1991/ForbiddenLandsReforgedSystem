@@ -5897,16 +5897,35 @@ function handleTravelAction(assignedPartyMemberIds, rollName) {
                         },
                         water: {
                             label: `<img class="forage-image" src="systems/forbidden-lands/assets/assorted/water.webp" style=" vertical-align:middle; margin-right:5px;"> <br> Water`,
-                            callback: () => handleItemReward('water-key', sixCount)
+                            callback: () => {
+                                handleItemReward('water-key', sixCount);
+        
+                                // Holen des Ordners 'Spieler'
+                                let playerFolder = game.folders.find(f => f.name === "Spieler" && f.type === "Actor");
+        
+                                if (playerFolder) {
+                                    // Überprüfen aller Schauspieler im 'Spieler'-Ordner
+                                    playerFolder.contents.forEach(actor => {
+                                        if (actor.system.consumable && actor.system.consumable.water) {
+                                            // Setze den Wasserwert auf 4, falls dieser vorhanden ist
+                                            actor.update({ 'system.consumable.water.value': 4 });
+                                        }
+                                    });
+                                } else {
+                                    console.warn("Folder 'Spieler' not found!");
+                                }
+                            }
                         }
                     },
                     default: ""
                 }, {
-                    resizable: true, // ermöglicht das Resizing des Dialogs
-                    classes: ["foraging-dialog"] // fügt eine benutzerdefinierte Klasse hinzu
+                    resizable: true,
+                    classes: ["foraging-dialog"]
                 }).render(true);
             }
         };
+        
+        
         
         // Funktion, die das Bild des Items basierend auf dem Key von game.items zurückgibt
         function getItemImage(itemKey) {
