@@ -7549,12 +7549,15 @@ function openRationDistributionDialog(rationsCooked, folderSpieler) {
         let actor = app.actor;
         let user = game.user;  // Aktueller Benutzer
     
-        // Button für PIN-Verwaltung hinzufügen
-        const managePinButton = `<a class="manage-pin" title="PIN verwalten"><i class="fas fa-lock"></i> PIN verwalten</a>`;
-        html.closest('.window-app').find('.window-title').after(managePinButton);
+        // Stelle sicher, dass der Button nur einmal hinzugefügt wird
+        if (!html.closest('.window-app').find('.manage-pin').length) {
+            // Button für PIN-Verwaltung hinzufügen
+            const managePinButton = `<a class="manage-pin" title="PIN verwalten"><i class="fas fa-lock"></i> PIN verwalten</a>`;
+            html.closest('.window-app').find('.window-title').after(managePinButton);
+        }
     
-        // Funktion für PIN-Verwaltung beim Klick auf den Button
-        html.closest('.window-app').find('.manage-pin').click(async (ev) => {
+        // Entferne alle bestehenden click-Handler, bevor ein neuer hinzugefügt wird
+        html.closest('.window-app').find('.manage-pin').off('click').click(async (ev) => {
             ev.preventDefault();
     
             // Dialog zur PIN-Verwaltung
