@@ -4476,6 +4476,24 @@ html.no-borders #sidebar,html.no-borders #players,html.no-borders #hotbar #actio
 	padding: 20px!important;
 }
 
+#pin-input {
+	height: 60px!important;
+	margin-bottom: 30px!important;
+	text-align: center;
+	font-size: 24px;
+}
+
+#new-pin-input {
+	height: 60px!important;
+	margin-bottom: 30px!important;
+	text-align: center;
+	font-size: 24px;
+}
+
+.pin-input-field {
+	padding: 15px!important
+}
+
 
 
 .foraging-dialog .dialog-buttons {

@@ -4958,12 +4958,7 @@
                     class: "rest-up",
                     icon: "fas fa-bed",
                     onclick: () => this.actor.rest()
-                }, {
-                    label: game.i18n.localize("SHEET.HEADER.ROLL"),
-                    class: "custom-roll",
-                    icon: "fas fa-dice",
-                    onclick: () => this.rollAction("ACTION.GENERIC")
-                },
+                }
                 // {
                 //     label: game.i18n.localize("SHEET.HEADER.CHAR_GEN"),
                 //     class: "char-gen",
@@ -7528,6 +7523,175 @@ function openRationDistributionDialog(rationsCooked, folderSpieler) {
             })
         })
     });
+
+
+
+    Hooks.on('renderActorSheet', (app, html, data) => {
+        let actor = app.actor;
+    
+        // Button für PIN-Verwaltung hinzufügen
+        const managePinButton = `<a class="manage-pin" title="PIN verwalten"><i class="fas fa-lock"></i> PIN verwalten</a>`;
+        html.closest('.window-app').find('.window-title').after(managePinButton);
+    
+        // Funktion für PIN-Verwaltung beim Klick auf den Button
+        html.closest('.window-app').find('.manage-pin').click(async (ev) => {
+            ev.preventDefault();
+            
+            // Dialog zur PIN-Verwaltung
+            new Dialog({
+                title: "PIN verwalten",
+                content: `
+                    <p>Was möchtest du mit dem PIN-Code tun?</p>
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        <button id="set-pin">PIN setzen</button>
+                        <button id="change-pin" ${!actor.getFlag('world', 'pinCode') ? 'disabled' : ''}>PIN ändern</button>
+                        <button id="remove-pin" ${!actor.getFlag('world', 'pinCode') ? 'disabled' : ''} style="color: red;">PIN entfernen</button>
+                    </div>
+                `,
+                buttons: {
+                    close: {
+                        label: "Schließen",
+                        callback: () => {}
+                    }
+                },
+                render: (html) => {
+                    html.find('#set-pin').click(async () => {
+                        let setPinDialog = new Dialog({
+                            title: "PIN setzen",
+                            content: `<p>Bitte gib einen neuen PIN-Code ein:</p><input type="password" id="new-pin-input" placeholder="PIN-Code eingeben">`,
+                            buttons: {
+                                submit: {
+                                    icon: "<i class='fas fa-check'></i>",
+                                    label: "Setzen",
+                                    callback: async (html) => {
+                                        let newPin = html.find("#new-pin-input").val();
+                                        if (newPin) {
+                                            await actor.setFlag('world', 'pinCode', newPin);
+                                            ui.notifications.info('PIN-Code erfolgreich gesetzt.');
+                                        } else {
+                                            ui.notifications.error('Kein PIN eingegeben.');
+                                        }
+                                    }
+                                },
+                                cancel: {
+                                    icon: "<i class='fas fa-times'></i>",
+                                    label: "Abbrechen"
+                                }
+                            }
+                        });
+                        setPinDialog.render(true);
+                    });
+    
+                    html.find('#change-pin').click(async () => {
+                        if (!actor.getFlag('world', 'pinCode')) return;
+                        
+                        let changePinDialog = new Dialog({
+                            title: "PIN ändern",
+                            content: `<p>Bitte gib einen neuen PIN-Code ein:</p><input type="password" id="new-pin-input" placeholder="Neuen PIN-Code eingeben">`,
+                            buttons: {
+                                submit: {
+                                    icon: "<i class='fas fa-check'></i>",
+                                    label: "Speichern",
+                                    callback: async (html) => {
+                                        let newPin = html.find("#new-pin-input").val();
+                                        if (newPin) {
+                                            await actor.setFlag('world', 'pinCode', newPin);
+                                            ui.notifications.info('PIN-Code erfolgreich geändert.');
+                                        } else {
+                                            ui.notifications.error('Kein PIN eingegeben.');
+                                        }
+                                    }
+                                },
+                                cancel: {
+                                    icon: "<i class='fas fa-times'></i>",
+                                    label: "Abbrechen"
+                                }
+                            }
+                        });
+                        changePinDialog.render(true);
+                    });
+    
+                    html.find('#remove-pin').click(async () => {
+                        if (!actor.getFlag('world', 'pinCode')) return;
+                        
+                        let confirmationDialog = new Dialog({
+                            title: "PIN entfernen",
+                            content: `<p>Bist du sicher, dass du den PIN-Code entfernen möchtest? Dies wird den Schutz des Actor Sheets aufheben.</p>`,
+                            buttons: {
+                                confirm: {
+                                    icon: "<i class='fas fa-check'></i>",
+                                    label: "Ja, entfernen",
+                                    callback: async () => {
+                                        await actor.unsetFlag('world', 'pinCode');
+                                        ui.notifications.info('PIN-Code erfolgreich entfernt.');
+                                    }
+                                },
+                                cancel: {
+                                    icon: "<i class='fas fa-times'></i>",
+                                    label: "Abbrechen"
+                                }
+                            }
+                        });
+                        confirmationDialog.render(true);
+                    });
+                }
+            }).render(true);
+        });
+    
+        // Überprüfe, ob ein PIN-Code gesetzt ist und ob der Benutzer ein GM ist
+        let pinCode = actor.getFlag('world', 'pinCode');
+    
+        if (pinCode && !game.user.isGM) {
+            // Füge eine blockierende Überlagerung über das Actor Sheet hinzu, nur wenn der Benutzer kein GM ist
+            let overlay = $(`<div class="pin-overlay" style="
+                position: absolute; 
+                top: 0; 
+                left: 0; 
+                width: 100%; 
+                height: 100%; 
+                background-color: rgba(255, 255, 255, 1); 
+                z-index: 1000; 
+                display: flex; 
+                justify-content: center; 
+                align-items: center;
+                color: black;
+                font-size: 1.5em;
+                ">PIN-Code erforderlich</div>`);
+    
+            // Füge das Overlay dem Actor Sheet hinzu
+            html.append(overlay);
+    
+            // PIN-Code Dialog öffnen
+            let dialog = new Dialog({
+                title: "PIN-Code erforderlich",
+                classes: ["pin-input-field"],
+                content: `<p>Bitte gib deinen PIN-Code ein, um Zugriff auf das Character Sheet zu erhalten:</p><input type="password" id="pin-input" placeholder="PIN-Code eingeben">`,
+                buttons: {
+                    submit: {
+                        icon: "<i class='fas fa-check'></i>",
+                        label: "Bestätigen",
+                        callback: (html) => {
+                            let input = html.find("#pin-input").val();
+                            if (input === pinCode) {
+                                ui.notifications.info('Zugriff gewährt.');
+                                // Entferne die Überlagerung, wenn der richtige PIN eingegeben wurde
+                                overlay.remove();
+                            } else {
+                                ui.notifications.error('Falscher PIN-Code. Zugriff verweigert.');
+                                app.close(); // Schließe das Actor Sheet, wenn der PIN falsch ist
+                            }
+                        }
+                    }
+                }
+            });
+            dialog.render(true);
+        }
+    });
+    
+    
+    
+
+
     Hooks.on("canvasReady", canvas => {
         canvas.hud.token = new ForbiddenLandsTokenHUD
     });
