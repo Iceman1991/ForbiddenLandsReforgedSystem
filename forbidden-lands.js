@@ -7749,26 +7749,25 @@ function openRationDistributionDialog(rationsCooked, folderSpieler) {
 
 
 ///day tracker
-
 // Dynamically include the Material Icons stylesheet
 const link = document.createElement('link');
 link.href = "https://fonts.googleapis.com/icon?family=Material+Icons";
 link.rel = "stylesheet";
 document.head.appendChild(link);
 
-const timesOfDay = ["Morning", "Noon", "Evening", "Night"];
+const timesOfDay = ["Morgen", "Mittag", "Abend", "Nacht"];
 const darknessLevels = {
-    "Morning": 0.2,
-    "Noon": 0.0,
-    "Evening": 0.5,
-    "Night": 1.0
+    "Morgen": 0.2,
+    "Mittag": 0.0,
+    "Abend": 0.5,
+    "Nacht": 1.0
 };
 
 const icons = {
-    "Morning": "wb_sunny",
-    "Noon": "wb_sunny",
-    "Evening": "wb_twilight",
-    "Night": "nights_stay"
+    "Morgen": "wb_twilight",
+    "Mittag": "wb_sunny",
+    "Abend": "wb_twilight",
+    "Nacht": "nights_stay"
 };
 
 Hooks.once('init', () => {
@@ -7791,6 +7790,9 @@ Hooks.once('init', () => {
 
 async function updateTimeDisplay() {
     const currentTimeIndex = game.settings.get('forbidden-lands', 'currentTimeIndex');
+    const currentTime = timesOfDay[currentTimeIndex];
+    
+    // Update active time icon
     document.querySelectorAll(".time-icon").forEach((icon, index) => {
         if (index === currentTimeIndex) {
             icon.classList.add("active-time");
@@ -7799,8 +7801,10 @@ async function updateTimeDisplay() {
         }
     });
 
+    // Display current time under the icons
+    document.getElementById("current-time-display").innerText = `${currentTime}`;
+
     if (game.user.isGM) {
-        const currentTime = timesOfDay[currentTimeIndex];
         const toggleDarkness = game.settings.get('forbidden-lands', 'toggleDarkness');
         if (toggleDarkness) {
             await updateSceneDarkness(darknessLevels[currentTime]);
@@ -7851,22 +7855,28 @@ Hooks.on('ready', () => {
     const timeTracker = document.createElement('div');
     timeTracker.id = 'time-tracker';
     timeTracker.innerHTML = `
-        <div class="time-controls">
-            ${timesOfDay.map((time, index) => `
-                <i class="material-icons time-icon" data-time-index="${index}">${icons[time]}</i>
-            `).join('')}
-            ${game.user.isGM ? '<label><input type="checkbox" id="toggle-darkness" checked> Change Darkness</label>' : ''}
+        <div id="time-wrapper" class="border" style="text-align: center; width: 100%;">
+            <div class="time-controls">
+                ${timesOfDay.map((time, index) => `
+                    <i class="material-icons time-icon" data-time-index="${index}">${icons[time]}</i>
+                `).join('')}
+                ${game.user.isGM ? '<label><input type="checkbox" id="toggle-darkness" checked></label>' : ''}
+            </div>
+            <div id="current-time-display" style="color: black; font-size: 14px; margin-top: 5px;">Current Time: Morning</div>
         </div>
     `;
     document.body.appendChild(timeTracker);
 
-    makeDraggable(timeTracker);
-
+    // Ensure only GMs can click on the icons
     document.querySelectorAll(".time-icon").forEach(icon => {
-        icon.addEventListener("click", async (event) => {
-            const newIndex = parseInt(event.currentTarget.getAttribute("data-time-index"));
-            await setTimeIndex(newIndex);
-        });
+        if (game.user.isGM) {
+            icon.addEventListener("click", async (event) => {
+                const newIndex = parseInt(event.currentTarget.getAttribute("data-time-index"));
+                await setTimeIndex(newIndex);
+            });
+        } else {
+            icon.style.cursor = 'default';
+        }
     });
 
     if (game.user.isGM) {
@@ -7878,35 +7888,25 @@ Hooks.on('ready', () => {
 
     updateTimeDisplay();
     updateCheckboxState();
+
+    Hooks.on('updateCombat', (combat) => {
+        if (combat.started) {
+            document.getElementById('time-tracker').style.display = 'none';
+        } 
+    });
+
+    Hooks.on('deleteCombat', (combat) => {
+        document.getElementById('time-tracker').style.display = 'flex';
+    });
 });
 
-function makeDraggable(element) {
-    let isMouseDown = false;
-    let offset = { x: 0, y: 0 };
-
-    element.addEventListener('mousedown', (e) => {
-        isMouseDown = true;
-        offset.x = element.offsetLeft - e.clientX;
-        offset.y = element.offsetTop - e.clientY;
-    });
-
-    document.addEventListener('mouseup', () => {
-        isMouseDown = false;
-    });
-
-    document.addEventListener('mousemove', (e) => {
-        if (isMouseDown) {
-            element.style.left = e.clientX + offset.x + 'px';
-            element.style.top = e.clientY + offset.y + 'px';
-        }
-    });
-}
 
 Hooks.on('updateSetting', (setting) => {
     if (setting.key === 'forbidden-lands.currentTimeIndex') {
         updateTimeDisplay();
     }
 });
+
 
 ///day tracker
 
