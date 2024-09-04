@@ -4831,10 +4831,9 @@
         }
 
         async rollConsumable(identifier) {
-
             let consumable = this.actor.consumables[identifier];
             if (!consumable.value) return ui.notifications.warn("WARNING.NO_CONSUMABLE", { localize: true });
-        
+            
             let rollName = localizeString(consumable.label),
                 dice = CONFIG.fbl.consumableDice[consumable.value],
                 options = {
@@ -4848,6 +4847,9 @@
         
             if (identifier === "food" || identifier === "water") {
                 rolls.push(FBLRoll.create(`${dice}[${rollName}]`, {}, options));
+        
+                // Set a flag to track that the actor has rolled for food or water
+                await this.actor.setFlag('forbidden-lands', `${identifier}Rolled`, true);
             } else {
                 dice = CONFIG.fbl.consumableDiceTorches[consumable.value],
                 rolls.push(FBLRoll.create(`${dice}[${rollName}]`, {}, options));
@@ -7856,7 +7858,44 @@ async function setTimeIndex(newIndex) {
     updateTimeDisplay(); // Stelle sicher, dass das UI aktualisiert wird
 }
 
-// Diese Funktion erhöht den Tag und kümmert sich um die Umschaltung der Monate und Jahre
+
+
+// Function to be called at the end of the day, only for actors controlled by users
+// Function to be called at the end of the day, only for actors controlled by online users
+async function endOfDayConsumablesCheck() {
+    // Get the list of active users (online players)
+    const onlineUsers = game.users.filter(user => user.active && user.character); // Only active users with a character
+
+    // Get actors controlled by these users
+    const actors = onlineUsers.map(user => user.character).filter(actor => actor); // Map users to their controlled actors
+
+    let messageContent = `<h2>End of Day Summary</h2><p>The following player-controlled actors have rolled for their food and water consumption:</p><ul>`;
+
+    for (const actor of actors) {
+        const foodRolled = actor.getFlag('forbidden-lands', 'foodRolled');
+        const waterRolled = actor.getFlag('forbidden-lands', 'waterRolled');
+
+        messageContent += `<li><strong>${actor.name}</strong>: `;
+        messageContent += `Food = ${foodRolled ? 'Yes' : 'No'}, `;
+        messageContent += `Water = ${waterRolled ? 'Yes' : 'No'}</li>`;
+    }
+
+    messageContent += '</ul>';
+
+    // Create a chat message with the summary
+    ChatMessage.create({
+        content: messageContent,
+        speaker: { alias: "End of Day Report" }
+    });
+
+    // Reset the flags for the next day
+    for (const actor of actors) {
+        await actor.unsetFlag('forbidden-lands', 'foodRolled');
+        await actor.unsetFlag('forbidden-lands', 'waterRolled');
+    }
+}
+
+// Update the incrementDay function to call the endOfDayConsumablesCheck
 async function incrementDay() {
     let currentDay = game.settings.get('forbidden-lands', 'currentDay');
     let currentMonthIndex = game.settings.get('forbidden-lands', 'currentMonth');
@@ -7866,12 +7905,12 @@ async function incrementDay() {
 
     // Überprüfe, ob das Ende des Monats erreicht wurde
     if (currentDay > daysPerMonth) {
-        currentDay = 1; // Setze den Tag auf den ersten Tag des nächsten Monats
+        currentDay = 1;
         currentMonthIndex++;
 
         // Überprüfe, ob das Ende des Jahres erreicht wurde
         if (currentMonthIndex >= months.length) {
-            currentMonthIndex = 0; // Setze den Monat auf den ersten Monat des neuen Jahres
+            currentMonthIndex = 0;
             currentYear++;
         }
     }
@@ -7881,11 +7920,16 @@ async function incrementDay() {
     await game.settings.set('forbidden-lands', 'currentMonth', currentMonthIndex);
     await game.settings.set('forbidden-lands', 'currentYear', currentYear);
 
-    console.log(`Neues Datum gesetzt: ${currentDay}. ${months[currentMonthIndex]} ${currentYear}`); // Debugging
+    console.log(`Neues Datum gesetzt: ${currentDay}. ${months[currentMonthIndex]} ${currentYear}`);
 
     // Aktualisiere die Anzeige
     updateDateDisplay();
+
+    // Check which actors have rolled for food and water at the end of the day (only player-controlled actors)
+    await endOfDayConsumablesCheck();
 }
+
+
 
 
 async function updateSceneDarkness(targetDarkness, duration = 1000) {
@@ -8025,21 +8069,60 @@ function openCalendar() {
 
 Hooks.on('ready', () => {
     const timeTracker = document.createElement('div');
-    timeTracker.id = 'time-tracker';
-    timeTracker.innerHTML = `
-        <div id="time-wrapper" class="border" style="text-align: center; width: 100%;">
-            <div class="time-controls">
-                ${timesOfDay.map((time, index) => `
-                    <i class="material-icons time-icon" data-time-index="${index}">${icons[time]}</i>
-                `).join('')}
-                ${game.user.isGM ? '<label><input type="checkbox" id="toggle-darkness" checked></label>' : ''}
-            </div>
-            <div id="current-time-display" style="color: black; font-size: 14px; margin-top: 5px;">Current Time: Morning</div>
-            <div id="current-date-display" style="color: black; font-size: 14px; margin-top: 5px; cursor: pointer;">1. SpringRise 1165</div>
-            <div id="forage-info" style="color: gray; font-size: 10px; margin-top: 5px;"></div> <!-- Forage info will be shown here -->
+timeTracker.id = 'time-tracker';
+timeTracker.innerHTML = `
+    <div id="time-wrapper" class="border" style="text-align: center; width: 100%;">
+        <div class="time-controls">
+            ${timesOfDay.map((time, index) => `
+                <i class="material-icons time-icon" data-time-index="${index}">${icons[time]}</i>
+            `).join('')}
+            ${game.user.isGM ? '<label><input type="checkbox" id="toggle-darkness" checked></label>' : ''}
         </div>
-    `;
-    document.body.appendChild(timeTracker);
+        <div id="current-time-display" style="color: black; font-size: 14px; margin-top: 5px;">Current Time: Morning</div>
+        <div style="display: flex; align-items: center; justify-content: center; margin-top: 5px;">
+            <div id="current-date-display" style="color: black; font-size: 14px; cursor: pointer;">1. SpringRise 1165</div>
+            <i class="material-icons" id="info-button" style="cursor: pointer; margin-left: 8px;">info</i>
+        </div>
+        <div id="forage-info" style="color: gray; font-size: 10px; margin-top: 5px;"></div> <!-- Forage info will be shown here -->
+    </div>
+`;
+document.body.appendChild(timeTracker);
+
+// Event listener for the info button
+document.getElementById('info-button').addEventListener('click', () => {
+    // Call the function to display whether players have rolled for food and water
+    showConsumablesInfo();
+});
+
+// Function to display the food and water roll information for the current day
+async function showConsumablesInfo() {
+    // Get the list of active users (online players)
+    const onlineUsers = game.users.filter(user => user.active && user.character); // Only active users with a character
+
+    // Get actors controlled by these users
+    const actors = onlineUsers.map(user => user.character).filter(actor => actor); // Map users to their controlled actors
+
+    let messageContent = `<h2>Today's Consumables</h2><p>The following players have rolled for their food and water consumption:</p><ul>`;
+
+    for (const actor of actors) {
+        const foodRolled = actor.getFlag('forbidden-lands', 'foodRolled');
+        const waterRolled = actor.getFlag('forbidden-lands', 'waterRolled');
+
+        messageContent += `<li><strong>${actor.name}</strong>: `;
+        messageContent += `Food = ${foodRolled ? 'Yes' : 'No'}, `;
+        messageContent += `Water = ${waterRolled ? 'Yes' : 'No'}</li>`;
+    }
+
+    messageContent += '</ul>';
+
+    // Display the message as a chat message
+    ChatMessage.create({
+        content: messageContent,
+        speaker: { alias: "Daily Consumables Info" }
+    });
+}
+
+
 
     // Date click listener to open the calendar
     document.getElementById("current-date-display").addEventListener("click", () => {
