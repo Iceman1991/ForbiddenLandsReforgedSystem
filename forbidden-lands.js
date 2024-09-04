@@ -7528,6 +7528,7 @@ function openRationDistributionDialog(rationsCooked, folderSpieler) {
 
     Hooks.on('renderActorSheet', (app, html, data) => {
         let actor = app.actor;
+        let user = game.user;  // Aktueller Benutzer
     
         // Button für PIN-Verwaltung hinzufügen
         const managePinButton = `<a class="manage-pin" title="PIN verwalten"><i class="fas fa-lock"></i> PIN verwalten</a>`;
@@ -7536,7 +7537,7 @@ function openRationDistributionDialog(rationsCooked, folderSpieler) {
         // Funktion für PIN-Verwaltung beim Klick auf den Button
         html.closest('.window-app').find('.manage-pin').click(async (ev) => {
             ev.preventDefault();
-            
+    
             // Dialog zur PIN-Verwaltung
             new Dialog({
                 title: "PIN verwalten",
@@ -7584,7 +7585,7 @@ function openRationDistributionDialog(rationsCooked, folderSpieler) {
     
                     html.find('#change-pin').click(async () => {
                         if (!actor.getFlag('world', 'pinCode')) return;
-                        
+    
                         let changePinDialog = new Dialog({
                             title: "PIN ändern",
                             content: `<p>Bitte gib einen neuen PIN-Code ein:</p><input type="password" id="new-pin-input" placeholder="Neuen PIN-Code eingeben">`,
@@ -7613,7 +7614,7 @@ function openRationDistributionDialog(rationsCooked, folderSpieler) {
     
                     html.find('#remove-pin').click(async () => {
                         if (!actor.getFlag('world', 'pinCode')) return;
-                        
+    
                         let confirmationDialog = new Dialog({
                             title: "PIN entfernen",
                             content: `<p>Bist du sicher, dass du den PIN-Code entfernen möchtest? Dies wird den Schutz des Actor Sheets aufheben.</p>`,
@@ -7640,53 +7641,61 @@ function openRationDistributionDialog(rationsCooked, folderSpieler) {
     
         // Überprüfe, ob ein PIN-Code gesetzt ist und ob der Benutzer ein GM ist
         let pinCode = actor.getFlag('world', 'pinCode');
+        let lastPinEntry = user.getFlag('world', `lastPinEntry_${actor.id}`); // Zeitstempel der letzten PIN-Eingabe für den einzelnen User und Actor
+        let currentTime = Date.now();
     
-        if (pinCode && !game.user.isGM) {
-            // Füge eine blockierende Überlagerung über das Actor Sheet hinzu, nur wenn der Benutzer kein GM ist
-            let overlay = $(`<div class="pin-overlay" style="
-                position: absolute; 
-                top: 0; 
-                left: 0; 
-                width: 100%; 
-                height: 100%; 
-                background-color: rgba(255, 255, 255, 1); 
-                z-index: 1000; 
-                display: flex; 
-                justify-content: center; 
-                align-items: center;
-                color: black;
-                font-size: 1.5em;
-                ">PIN-Code erforderlich</div>`);
+        if (pinCode && !user.isGM) {
+            // Überprüfen, ob die letzte PIN-Eingabe weniger als eine Minute zurückliegt
+            if (!lastPinEntry || currentTime - lastPinEntry > 6000000) { // 60.000 ms = 1 Minute
+                // Füge eine blockierende Überlagerung über das Actor Sheet hinzu, nur wenn der Benutzer kein GM ist
+                let overlay = $(`<div class="pin-overlay" style="
+                    position: absolute; 
+                    top: 0; 
+                    left: 0; 
+                    width: 100%; 
+                    height: 100%; 
+                    background-color: rgba(255, 255, 255, 1); 
+                    z-index: 1000; 
+                    display: flex; 
+                    justify-content: center; 
+                    align-items: center;
+                    color: black;
+                    font-size: 1.5em;
+                    ">PIN-Code erforderlich</div>`);
     
-            // Füge das Overlay dem Actor Sheet hinzu
-            html.append(overlay);
+                // Füge das Overlay dem Actor Sheet hinzu
+                html.append(overlay);
     
-            // PIN-Code Dialog öffnen
-            let dialog = new Dialog({
-                title: "PIN-Code erforderlich",
-                classes: ["pin-input-field"],
-                content: `<p>Bitte gib deinen PIN-Code ein, um Zugriff auf das Character Sheet zu erhalten:</p><input type="password" id="pin-input" placeholder="PIN-Code eingeben">`,
-                buttons: {
-                    submit: {
-                        icon: "<i class='fas fa-check'></i>",
-                        label: "Bestätigen",
-                        callback: (html) => {
-                            let input = html.find("#pin-input").val();
-                            if (input === pinCode) {
-                                ui.notifications.info('Zugriff gewährt.');
-                                // Entferne die Überlagerung, wenn der richtige PIN eingegeben wurde
-                                overlay.remove();
-                            } else {
-                                ui.notifications.error('Falscher PIN-Code. Zugriff verweigert.');
-                                app.close(); // Schließe das Actor Sheet, wenn der PIN falsch ist
+                // PIN-Code Dialog öffnen
+                let dialog = new Dialog({
+                    title: "PIN-Code erforderlich",
+                    classes: ["pin-input-field"],
+                    content: `<p>Bitte gib deinen PIN-Code ein, um Zugriff auf das Character Sheet zu erhalten:</p><input type="password" id="pin-input" placeholder="PIN-Code eingeben">`,
+                    buttons: {
+                        submit: {
+                            icon: "<i class='fas fa-check'></i>",
+                            label: "Bestätigen",
+                            callback: async (html) => {
+                                let input = html.find("#pin-input").val();
+                                if (input === pinCode) {
+                                    ui.notifications.info('Zugriff gewährt.');
+                                    // Entferne die Überlagerung, wenn der richtige PIN eingegeben wurde
+                                    overlay.remove();
+                                    // Speichere den aktuellen Zeitstempel als letzte PIN-Eingabe für diesen Benutzer und Actor
+                                    await user.setFlag('world', `lastPinEntry_${actor.id}`, Date.now());
+                                } else {
+                                    ui.notifications.error('Falscher PIN-Code. Zugriff verweigert.');
+                                    app.close(); // Schließe das Actor Sheet, wenn der PIN falsch ist
+                                }
                             }
                         }
                     }
-                }
-            });
-            dialog.render(true);
+                });
+                dialog.render(true);
+            }
         }
     });
+    
     
     
     
