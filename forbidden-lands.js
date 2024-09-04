@@ -7668,7 +7668,7 @@ function openRationDistributionDialog(rationsCooked, folderSpieler) {
     
         if (pinCode && !user.isGM) {
             // Überprüfen, ob die letzte PIN-Eingabe weniger als eine Minute zurückliegt
-            if (!lastPinEntry || currentTime - lastPinEntry > 6000000) { // 60.000 ms = 1 Minute
+            if (!lastPinEntry || currentTime - lastPinEntry > 18000000) { // 60.000 ms = 1 Minute
                 // Füge eine blockierende Überlagerung über das Actor Sheet hinzu, nur wenn der Benutzer kein GM ist
                 let overlay = $(`<div class="pin-overlay" style="
                     position: absolute; 
@@ -7748,6 +7748,9 @@ function openRationDistributionDialog(rationsCooked, folderSpieler) {
 
 
 
+
+
+
 ///day tracker
 // Dynamically include the Material Icons stylesheet
 const link = document.createElement('link');
@@ -7791,17 +7794,19 @@ Hooks.once('init', () => {
 async function updateTimeDisplay() {
     const currentTimeIndex = game.settings.get('forbidden-lands', 'currentTimeIndex');
     const currentTime = timesOfDay[currentTimeIndex];
-    
-    // Update active time icon
+
+    // Toggle 'active-time' class for the icons
     document.querySelectorAll(".time-icon").forEach((icon, index) => {
         if (index === currentTimeIndex) {
             icon.classList.add("active-time");
+            console.log(icon)
+            console.log(`Icon for ${timesOfDay[index]} is active`, icon); // Debugging
         } else {
             icon.classList.remove("active-time");
         }
     });
 
-    // Display current time under the icons
+    // Update the time display text
     document.getElementById("current-time-display").innerText = `${currentTime}`;
 
     if (game.user.isGM) {
@@ -7812,11 +7817,66 @@ async function updateTimeDisplay() {
     }
 }
 
+
+// Ensure event listeners are properly attached to icons
+document.querySelectorAll(".time-icon").forEach(icon => {
+    if (game.user.isGM) {
+        icon.addEventListener("click", async (event) => {
+            const newIndex = parseInt(event.currentTarget.getAttribute("data-time-index"));
+            console.log(`Icon with index ${newIndex} clicked`); // Debugging
+            await setTimeIndex(newIndex); // Update the time index
+        });
+    } else {
+        icon.style.cursor = 'default'; // No clicks for non-GMs
+    }
+});
+
+
 async function setTimeIndex(newIndex) {
+    // Setze den aktuellen Zeitindex in den Spieleinstellungen
     await game.settings.set('forbidden-lands', 'currentTimeIndex', newIndex);
-    game.socket.emit('system.forbidden-lands', { type: 'updateTime', index: newIndex });
-    updateTimeDisplay();
+    console.log(`Neuer Zeitindex gesetzt: ${newIndex}`); // Debugging
+
+    // Wenn die Zeit von "Nacht" auf "Morgen" wechselt, erhöhe den Tag
+    if (newIndex === 0) {
+        await incrementDay(); // Neue Funktion, um den Tag zu erhöhen
+    }
+
+    // Aktualisiere die Anzeige
+    updateTimeDisplay(); // Stelle sicher, dass das UI aktualisiert wird
 }
+
+// Diese Funktion erhöht den Tag und kümmert sich um die Umschaltung der Monate und Jahre
+async function incrementDay() {
+    let currentDay = game.settings.get('forbidden-lands', 'currentDay');
+    let currentMonthIndex = game.settings.get('forbidden-lands', 'currentMonth');
+    let currentYear = game.settings.get('forbidden-lands', 'currentYear');
+
+    currentDay++;
+
+    // Überprüfe, ob das Ende des Monats erreicht wurde
+    if (currentDay > daysPerMonth) {
+        currentDay = 1; // Setze den Tag auf den ersten Tag des nächsten Monats
+        currentMonthIndex++;
+
+        // Überprüfe, ob das Ende des Jahres erreicht wurde
+        if (currentMonthIndex >= months.length) {
+            currentMonthIndex = 0; // Setze den Monat auf den ersten Monat des neuen Jahres
+            currentYear++;
+        }
+    }
+
+    // Setze den neuen Tag, Monat und Jahr in den Einstellungen
+    await game.settings.set('forbidden-lands', 'currentDay', currentDay);
+    await game.settings.set('forbidden-lands', 'currentMonth', currentMonthIndex);
+    await game.settings.set('forbidden-lands', 'currentYear', currentYear);
+
+    console.log(`Neues Datum gesetzt: ${currentDay}. ${months[currentMonthIndex]} ${currentYear}`); // Debugging
+
+    // Aktualisiere die Anzeige
+    updateDateDisplay();
+}
+
 
 async function updateSceneDarkness(targetDarkness, duration = 1000) {
     const scene = game.scenes.active;
@@ -7851,6 +7911,108 @@ async function updateCheckboxState() {
     }
 }
 
+
+
+Hooks.on('updateSetting', (setting) => {
+    if (setting.key === 'forbidden-lands.currentTimeIndex') {
+        updateTimeDisplay();
+    }
+});
+
+
+
+//////////////////////////////////////////////
+
+
+const months = ["SpringRise", "SpringWane", "SummerRise", "SummerWane", "FallRise", "FallWane", "WinterRise", "WinterWane"];
+const daysPerMonth = 45;
+const startingYear = 1165;
+
+Hooks.once('init', () => {
+    game.settings.register('forbidden-lands', 'currentDay', {
+        name: 'Current Day',
+        scope: 'world',
+        config: false,
+        type: Number,
+        default: 1
+    });
+
+    game.settings.register('forbidden-lands', 'currentMonth', {
+        name: 'Current Month',
+        scope: 'world',
+        config: false,
+        type: Number,
+        default: 0 // Index of the months array
+    });
+
+    game.settings.register('forbidden-lands', 'currentYear', {
+        name: 'Current Year',
+        scope: 'world',
+        config: false,
+        type: Number,
+        default: startingYear
+    });
+});
+
+async function updateDateDisplay() {
+    const currentDay = game.settings.get('forbidden-lands', 'currentDay');
+    const currentMonthIndex = game.settings.get('forbidden-lands', 'currentMonth');
+    const currentYear = game.settings.get('forbidden-lands', 'currentYear');
+    const currentMonth = months[currentMonthIndex];
+
+    // Update the date display
+    document.getElementById("current-date-display").innerText = `${currentDay}. ${currentMonth} ${currentYear}`;
+}
+
+async function setDate(day, monthIndex, year) {
+    await game.settings.set('forbidden-lands', 'currentDay', day);
+    await game.settings.set('forbidden-lands', 'currentMonth', monthIndex);
+    await game.settings.set('forbidden-lands', 'currentYear', year);
+    updateDateDisplay();
+}
+
+function openCalendar() {
+    // Prüfen, ob der Modal-Dialog bereits existiert
+    if (document.getElementById("calendar-modal")) return;
+
+    // Erstelle ein Modal für die Datumsauswahl
+    const modal = document.createElement("div");
+    modal.id = "calendar-modal";
+    modal.innerHTML = `
+        <div class="calendar-container">
+            <h2>Select Date</h2>
+            <label for="calendar-day">Day:</label>
+            <input type="number" id="calendar-day" min="1" max="${daysPerMonth}" value="${game.settings.get('forbidden-lands', 'currentDay')}" />
+            <label for="calendar-month">Month:</label>
+            <select id="calendar-month">
+                ${months.map((month, index) => `<option value="${index}" ${index === game.settings.get('forbidden-lands', 'currentMonth') ? 'selected' : ''}>${month}</option>`).join('')}
+            </select>
+            <label for="calendar-year">Year:</label>
+            <input type="number" id="calendar-year" value="${game.settings.get('forbidden-lands', 'currentYear')}" />
+            <button id="save-date">Save</button>
+            <button id="cancel-date">Cancel</button>
+        </div>
+    `;
+    document.body.appendChild(modal);
+
+    // Event-Listener für das Speichern und Schließen
+    document.getElementById("save-date").addEventListener("click", async () => {
+        const day = parseInt(document.getElementById("calendar-day").value);
+        const monthIndex = parseInt(document.getElementById("calendar-month").value);
+        const year = parseInt(document.getElementById("calendar-year").value);
+
+        await setDate(day, monthIndex, year);
+
+        // Schließe den Modal-Dialog
+        document.body.removeChild(modal);
+    });
+
+    document.getElementById("cancel-date").addEventListener("click", () => {
+        document.body.removeChild(modal);
+    });
+}
+
+
 Hooks.on('ready', () => {
     const timeTracker = document.createElement('div');
     timeTracker.id = 'time-tracker';
@@ -7863,9 +8025,18 @@ Hooks.on('ready', () => {
                 ${game.user.isGM ? '<label><input type="checkbox" id="toggle-darkness" checked></label>' : ''}
             </div>
             <div id="current-time-display" style="color: black; font-size: 14px; margin-top: 5px;">Current Time: Morning</div>
+            <div id="current-date-display" style="color: black; font-size: 14px; margin-top: 5px; cursor: pointer;">1. SpringRise 1165</div>
+            <div id="forage-info" style="color: gray; font-size: 10px; margin-top: 5px;"></div> <!-- Forage info will be shown here -->
         </div>
     `;
     document.body.appendChild(timeTracker);
+
+    // Date click listener to open the calendar
+    document.getElementById("current-date-display").addEventListener("click", () => {
+        if (game.user.isGM) {
+            openCalendar();
+        }
+    });
 
     // Ensure only GMs can click on the icons
     document.querySelectorAll(".time-icon").forEach(icon => {
@@ -7887,8 +8058,10 @@ Hooks.on('ready', () => {
     }
 
     updateTimeDisplay();
+    updateDateDisplay();
     updateCheckboxState();
 
+    // Hide time tracker when combat starts, show when it ends
     Hooks.on('updateCombat', (combat) => {
         if (combat.started) {
             document.getElementById('time-tracker').style.display = 'none';
@@ -7898,14 +8071,60 @@ Hooks.on('ready', () => {
     Hooks.on('deleteCombat', (combat) => {
         document.getElementById('time-tracker').style.display = 'flex';
     });
-});
 
+    // Listen for settings updates and refresh the time display when necessary
+    Hooks.on('updateSetting', (setting) => {
+        if (setting.key === 'forbidden-lands.currentTimeIndex') {
+            updateTimeDisplay();
+        } else if (
+            setting.key === 'forbidden-lands.currentDay' ||
+            setting.key === 'forbidden-lands.currentMonth' ||
+            setting.key === 'forbidden-lands.currentYear'
+        ) {
+            updateDateDisplay();
+        }
+    });
 
-Hooks.on('updateSetting', (setting) => {
-    if (setting.key === 'forbidden-lands.currentTimeIndex') {
-        updateTimeDisplay();
+    // Mapping der Monate zu den Forage-Werten
+    const forageModifiers = {
+        "SpringRise": -1,
+        "SpringWane": -1,
+        "SummerRise": 0,
+        "SummerWane": 0,
+        "FallRise": +1,
+        "FallWane": +1,
+        "WinterRise": -2,
+        "WinterWane": -2
+    };
+
+    // Funktion zur Ermittlung der Forage-Information basierend auf dem aktuellen Monat
+    function getForageInfo(month) {
+        const forageModifier = forageModifiers[month];
+        return `Forage: ${forageModifier}`;
     }
+
+    // Funktion zur Aktualisierung der Forage-Information
+    function updateForageInfo() {
+        const currentMonthIndex = game.settings.get('forbidden-lands', 'currentMonth');
+        const currentMonth = months[currentMonthIndex];
+        const forageInfo = getForageInfo(currentMonth);
+
+        // Aktualisiere das Forage-Info-Element
+        const forageInfoElement = document.getElementById("forage-info");
+        forageInfoElement.innerText = forageInfo;
+    }
+
+    // Call updateForageInfo when the page is loaded
+    updateForageInfo();
+    
+    // Update forage info every time the date changes
+    Hooks.on('updateSetting', (setting) => {
+        if (setting.key === 'forbidden-lands.currentMonth') {
+            updateForageInfo();
+        }
+    });
 });
+
 
 
 ///day tracker
