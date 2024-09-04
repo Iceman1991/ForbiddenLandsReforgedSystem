@@ -4470,7 +4470,7 @@ html.no-borders #sidebar,html.no-borders #players,html.no-borders #hotbar #actio
 }
 
 .foraging-dialog {
-	height: auto;
+	min-height: 360px;
 	width: auto!important;
 	background-color: black;
 	padding: 20px!important;
