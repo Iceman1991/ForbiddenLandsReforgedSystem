@@ -6154,13 +6154,13 @@ function handleTravelAction(assignedPartyMemberIds, rollName) {
             let itemData = game.items.get(itemKey);
             if (!itemData) return;
 
-            let existingItem = actor.items.find(i => i.name === itemData.name && i.data.data.shelfLife === itemData.data.data.shelfLife);
+            let existingItem = actor.items.find(i => i.name === itemData.name && i.system.shelfLife === itemData.system.shelfLife);
 
             if (existingItem) {
                 existingItem.update({ 'data.quantity': existingItem.data.data.quantity + quantity });
             } else {
                 let newItemData = itemData.toObject();
-                newItemData.data.quantity = quantity;
+                newItemData.system.quantity = quantity;
                 actor.createEmbeddedDocuments('Item', [newItemData]);
             }
 
