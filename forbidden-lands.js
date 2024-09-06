@@ -4367,8 +4367,7 @@
                                     ChatMessage.create({
                                         user: game.user.id,
                                         speaker: ChatMessage.getSpeaker({ actor: this.actor }),
-                                        content: chatMessage,
-                                        whisper: whisperTo  // Nachricht an Spieler, Empfänger und GM senden
+                                        content: chatMessage
                                     });
                                 }
                             }
@@ -4626,8 +4625,8 @@
                     }
                 };
             this.actorProperties.subtype?.type === "npc" && (data.spell.willpower = {
-                max: 9,
-                value: 9
+                    max: 9,
+                    value: 9
             });
             let options = {
                 maxPush: "0",
