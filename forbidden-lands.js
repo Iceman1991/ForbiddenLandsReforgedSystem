@@ -1419,7 +1419,7 @@
             }
         }
         static get defaultOptions() {
-            return mergeObject(super.defaultOptions, {
+            return foundry.utils.mergeObject(super.defaultOptions, {
                 classes: ["forbidden-lands"],
                 width: "500",
                 height: "auto",
@@ -3355,11 +3355,11 @@
                     let updates = new Map(update[embeddedName].map(u2 => [u2._id, u2]));
                     for (let embedded of actorData[embeddedName]) {
                         let toUpdate = updates.get(embedded._id);
-                        toUpdate && mergeObject(embedded, toUpdate)
+                        toUpdate && foundry.utils.mergeObject(embedded, toUpdate)
                     }
                     delete update[embeddedName]
                 }
-                mergeObject(t.actorData, update)
+                foundry.utils.mergeObject(t.actorData, update)
             }
             return t
         })
@@ -3417,7 +3417,7 @@
                 this.#resolve = resolve
             });
             static get defaultOptions() {
-                return mergeObject(super.defaultOptions, {
+                return foundry.utils.mergeObject(super.defaultOptions, {
                     template: "systems/forbidden-lands/templates/components/tables-config.hbs",
                     classes: ["tables-config"],
                     title: "CONFIG.TABLE_CONFIG.TITLE",
@@ -3479,7 +3479,7 @@
                 this.#resolve = resolve
             });
             static get defaultOptions() {
-                return mergeObject(super.defaultOptions, {
+                return foundry.utils.mergeObject(super.defaultOptions, {
                     template: "systems/forbidden-lands/templates/components/sheet-config.hbs",
                     classes: ["sheet-config"],
                     title: "CONFIG.SHEET_CONFIG.TITLE",
@@ -3853,7 +3853,7 @@
             super(options), this.character = null, this.existActor = existActor, this.dataset = dataset
         }
         static get defaultOptions() {
-            return mergeObject(super.defaultOptions, {
+            return foundry.utils.mergeObject(super.defaultOptions, {
                 classes: ["forbidden-lands", "sheet", "actor"],
                 template: "systems/forbidden-lands/templates/components/character-generator/generator-sheet.hbs",
                 title: game.i18n.localize("FLCG.TITLE"),
@@ -4992,7 +4992,7 @@
     var ForbiddenLandsCharacterSheet = class ForbiddenLandsCharacterSheet extends ForbiddenLandsActorSheet {
         static get defaultOptions() {
             let useHealthAndResolve = game.settings.get("forbidden-lands", "useHealthAndResolve");
-            return mergeObject(super.defaultOptions, {
+            return foundry.utils.mergeObject(super.defaultOptions, {
                 classes: ["forbidden-lands", "sheet", "actor"],
                 width: 660,
                 height: useHealthAndResolve ? 790 : 740,
@@ -5258,7 +5258,7 @@
     init_define_GLOBALPATHS();
     var ForbiddenLandsMonsterSheet = class extends ForbiddenLandsActorSheet {
         static get defaultOptions() {
-            return mergeObject(super.defaultOptions, {
+            return foundry.utils.mergeObject(super.defaultOptions, {
                 ...super.defaultOptions,
                 classes: ["forbidden-lands", "sheet", "actor"],
                 template: "systems/forbidden-lands/templates/actor/monster/monster-sheet.hbs",
@@ -5507,7 +5507,7 @@
 
     var ForbiddenLandsStrongholdSheet = class extends ForbiddenLandsActorSheet {
     static get defaultOptions() {
-        return mergeObject(super.defaultOptions, {
+        return foundry.utils.mergeObject(super.defaultOptions, {
             classes: ["forbidden-lands", "sheet", "actor"],
             template: "systems/forbidden-lands/templates/actor/stronghold/stronghold-sheet.hbs",
             width: 650,
@@ -6157,7 +6157,7 @@ function handleTravelAction(assignedPartyMemberIds, rollName) {
             let existingItem = actor.items.find(i => i.name === itemData.name && i.system.shelfLife === itemData.system.shelfLife);
 
             if (existingItem) {
-                existingItem.update({ 'data.quantity': existingItem.data.data.quantity + quantity });
+                existingItem.update({ 'system.quantity': existingItem.system.quantity + quantity });
             } else {
                 let newItemData = itemData.toObject();
                 newItemData.system.quantity = quantity;
@@ -7420,7 +7420,7 @@ function openRationDistributionDialog(rationsCooked, folderSpieler) {
             return dragDrop.push({
                 dragSelector: ".party-member",
                 dropSelector: ".party-member-list"
-            }), mergeObject(super.defaultOptions, {
+            }), foundry.utils.mergeObject(super.defaultOptions, {
                 classes: ["forbidden-lands", "sheet", "actor", "party"],
                 template: "systems/forbidden-lands/templates/actor/party/party-sheet.hbs",
                 width: window.innerWidth * .05 + 650,
@@ -7546,7 +7546,7 @@ function openRationDistributionDialog(rationsCooked, folderSpieler) {
             return CONFIG.fbl
         }
         static get defaultOptions() {
-            return mergeObject(super.defaultOptions, {
+            return foundry.utils.mergeObject(super.defaultOptions, {
                 ...super.defaultOptions,
                 classes: ["forbidden-lands", "sheet", "item"],
                 width: window.innerWidth * .08 + 350,
@@ -7656,7 +7656,7 @@ function openRationDistributionDialog(rationsCooked, folderSpieler) {
     };
     var ForbiddenLandsWeaponSheet = class extends ForbiddenLandsItemSheet {
         static get defaultOptions() {
-            return mergeObject(super.defaultOptions, {
+            return foundry.utils.mergeObject(super.defaultOptions, {
                 ...super.defaultOptions,
                 template: "systems/forbidden-lands/templates/item/weapon/weapon-sheet.hbs",
                 tabs: [{
@@ -7670,7 +7670,7 @@ function openRationDistributionDialog(rationsCooked, folderSpieler) {
     init_define_GLOBALPATHS();
     var ForbiddenLandsArmorSheet = class extends ForbiddenLandsItemSheet {
         static get defaultOptions() {
-            return mergeObject(super.defaultOptions, {
+            return foundry.utils.mergeObject(super.defaultOptions, {
                 ...super.defaultOptions,
                 template: "systems/forbidden-lands/templates/item/armor/armor-sheet.hbs",
                 tabs: [{
@@ -7684,7 +7684,7 @@ function openRationDistributionDialog(rationsCooked, folderSpieler) {
     init_define_GLOBALPATHS();
     var ForbiddenLandsGearSheet = class extends ForbiddenLandsItemSheet {
         static get defaultOptions() {
-            return mergeObject(super.defaultOptions, {
+            return foundry.utils.mergeObject(super.defaultOptions, {
                 ...super.defaultOptions,
                 template: "systems/forbidden-lands/templates/item/gear/gear-sheet.hbs",
                 tabs: [{
@@ -7698,7 +7698,7 @@ function openRationDistributionDialog(rationsCooked, folderSpieler) {
     init_define_GLOBALPATHS();
     var ForbiddenLandsRawMaterialSheet = class extends ForbiddenLandsItemSheet {
         static get defaultOptions() {
-            return mergeObject(super.defaultOptions, {
+            return foundry.utils.mergeObject(super.defaultOptions, {
                 ...super.defaultOptions,
                 template: "systems/forbidden-lands/templates/item/raw-material/raw-material-sheet.hbs"
             })
@@ -7707,7 +7707,7 @@ function openRationDistributionDialog(rationsCooked, folderSpieler) {
     init_define_GLOBALPATHS();
     var ForbiddenLandsSpellSheet = class extends ForbiddenLandsItemSheet {
         static get defaultOptions() {
-            return mergeObject(super.defaultOptions, {
+            return foundry.utils.mergeObject(super.defaultOptions, {
                 ...super.defaultOptions,
                 template: "systems/forbidden-lands/templates/item/spell/spell-sheet.hbs"
             })
@@ -7716,7 +7716,7 @@ function openRationDistributionDialog(rationsCooked, folderSpieler) {
     init_define_GLOBALPATHS();
     var ForbiddenLandsTalentSheet = class extends ForbiddenLandsItemSheet {
         static get defaultOptions() {
-            return mergeObject(super.defaultOptions, {
+            return foundry.utils.mergeObject(super.defaultOptions, {
                 ...super.defaultOptions,
                 template: "systems/forbidden-lands/templates/item/talent/talent-sheet.hbs"
             })
@@ -7725,7 +7725,7 @@ function openRationDistributionDialog(rationsCooked, folderSpieler) {
     init_define_GLOBALPATHS();
     var ForbiddenLandsCriticalInjurySheet = class extends ForbiddenLandsItemSheet {
         static get defaultOptions() {
-            return mergeObject(super.defaultOptions, {
+            return foundry.utils.mergeObject(super.defaultOptions, {
                 ...super.defaultOptions,
                 template: "systems/forbidden-lands/templates/item/critical-injury/critical-injury-sheet.hbs",
                 width: 400,
@@ -7736,7 +7736,7 @@ function openRationDistributionDialog(rationsCooked, folderSpieler) {
     init_define_GLOBALPATHS();
     var ForbiddenLandsMonsterAttackSheet = class extends ForbiddenLandsItemSheet {
         static get defaultOptions() {
-            return mergeObject(super.defaultOptions, {
+            return foundry.utils.mergeObject(super.defaultOptions, {
                 ...super.defaultOptions,
                 template: "systems/forbidden-lands/templates/item/monster-attack/monster-attack-sheet.hbs"
             })
@@ -7745,7 +7745,7 @@ function openRationDistributionDialog(rationsCooked, folderSpieler) {
     init_define_GLOBALPATHS();
     var ForbiddenLandsBuildingSheet = class extends ForbiddenLandsItemSheet {
         static get defaultOptions() {
-            return mergeObject(super.defaultOptions, {
+            return foundry.utils.mergeObject(super.defaultOptions, {
                 ...super.defaultOptions,
                 template: "systems/forbidden-lands/templates/item/building/building-sheet.hbs"
             })
@@ -7754,7 +7754,7 @@ function openRationDistributionDialog(rationsCooked, folderSpieler) {
     init_define_GLOBALPATHS();
     var ForbiddenLandsHirelingSheet = class extends ForbiddenLandsItemSheet {
         static get defaultOptions() {
-            return mergeObject(super.defaultOptions, {
+            return foundry.utils.mergeObject(super.defaultOptions, {
                 ...super.defaultOptions,
                 template: "systems/forbidden-lands/templates/item/hireling/hireling-sheet.hbs"
             })
