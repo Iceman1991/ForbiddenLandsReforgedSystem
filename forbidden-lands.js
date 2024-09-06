@@ -108,43 +108,43 @@
             return super.create(data, options);
         }
         toggleCondition(conditionName) {
-    let statusEffect = CONFIG.statusEffects.find(it => it.id === conditionName),
-        currentEffect = Array.from(this.effects?.values()).find(it => it.icon === statusEffect.icon);
-
-    if (currentEffect) {
-        if (this.system.condition[conditionName].value) {
-            this.update({
-                [`system.condition.${conditionName}.value`]: !1
-            });
-        }
-        this.deleteEmbeddedDocuments("ActiveEffect", [currentEffect.id]);
-    } else {
-        this.createEmbeddedDocuments("ActiveEffect", [{
-            label: game.i18n.localize(statusEffect.label),
-            icon: statusEffect.icon,
-            changes: statusEffect.changes,
-            id: this.uuid,
-            statuses: statusEffect.statuses,
-            flags: {
-                core: {
-                    statusId: statusEffect.id
+            let statusEffect = CONFIG.statusEffects.find(it => it.id === conditionName),
+                currentEffect = Array.from(this.effects?.values()).find(it => it.icon === statusEffect.icon);
+    
+            if (currentEffect) {
+                if (this.system.condition[conditionName].value) {
+                    this.update({
+                        [`system.condition.${conditionName}.value`]: !1
+                    });
+                }
+                this.deleteEmbeddedDocuments("ActiveEffect", [currentEffect.id]);
+            } else {
+                this.createEmbeddedDocuments("ActiveEffect", [{
+                    label: game.i18n.localize(statusEffect.label),
+                    icon: statusEffect.icon,
+                    changes: statusEffect.changes,
+                    id: this.uuid,
+                    statuses: statusEffect.statuses,
+                    flags: {
+                        core: {
+                            statusId: statusEffect.id
+                        }
+                    }
+                }]);
+    
+                if (conditionName === "cold") {
+                    this.update({
+                        "system.attribute.strength.value": this.system.attribute.strength.value - 1,
+                        "system.attribute.wits.value": this.system.attribute.wits.value - 1
+                    });
+                    ChatMessage.create({
+                        content: `<b>${this.name}</b> is now cold, losing 1 point in Strength and Wits.`,
+                        speaker: ChatMessage.getSpeaker({actor: this})
+                    });
                 }
             }
-        }]);
-
-        if (conditionName === "cold") {
-            this.update({
-                "system.attribute.strength.value": this.system.attribute.strength.value - 1,
-                "system.attribute.wits.value": this.system.attribute.wits.value - 1
-            });
-            ChatMessage.create({
-                content: `<b>${this.name}</b> is now cold, losing 1 point in Strength and Wits.`,
-                speaker: ChatMessage.getSpeaker({actor: this})
-            });
         }
-    }
-}
-
+    
         hasStrongholdWithName() {
             let strongholds = game.actors.filter(actor => actor.type === 'stronghold');
             for (let stronghold of strongholds) {
@@ -154,8 +154,7 @@
             }
             return false;
         }
-
-
+    
         rest() {
             // Create a dialog for the player to choose between resting, sleeping, or staying in an inn
             new Dialog({
@@ -166,45 +165,25 @@
                 buttons: {
                     rest: {
                         label: "Rest",
-                        callback: () => this.restCharacters(this, "rest")
+                        callback: () => this.performRest("rest")
                     },
                     sleep: {
                         label: "Sleep",
-                        callback: () => this.restCharacters(this, "sleep")
+                        callback: () => this.performRest("sleep")
                     },
                     inn: {
                         label: "Inn",
-                        callback: () => this.restCharacters(this, "inn")
+                        callback: () => this.performRest("inn")
                     }
                 },
                 default: "rest"
             }).render(true);
         }
-        restCharacters(character, option) {
-            // Perform rest for the initial character
-            character.performRest(option, true);
-        
-            // Get all actors from the game
-            let allActors = game.actors.contents;
-        
-            allActors.forEach(actor => {
-                // Only proceed for other characters
-                if ((actor.name.includes(character.name) && actor.id !== character.id)) {
-                    if (option === "sleep" || option === "inn") {
-                        if (actor.type !== 'stronghold') {
-                            actor.performRest(option, false);
-                        }
-                        if (actor.type === 'stronghold') {
-                            actor.sheet._rest();
-                        }
-                    }
-                }
-            });
-        }
-        performRest(option, isMainCharacter) {
+    
+        performRest(option) {
             const activeConditions = Object.entries(this.conditions ?? {}).filter(([_key, value]) => value?.value);
             const isBlocked = (...conditions) => conditions.some(condition => activeConditions.map(([key]) => key).includes(condition));
-        
+    
             const data = {
                 attribute: {
                     agility: {
@@ -221,48 +200,44 @@
                     }
                 }
             };
-        
-            const shelfLifeMapping = {
-                "one day": 1,
-                "day": 1,
-                "one week": 7,
-                "week": 7,
-                "two weeks": 14,
-                "one month": 45,
-                "month": 45,
-                "two months": 90,
-                "one year": 360,
-                "year": 360,
-                "five years": 1800,
-                "ten years": 3600
-            };
-        
-            let itemsToDelete = [];
-            let criticalInjuryMessages = [];
-        
+    
+            // Remove the "sleepy" condition if "sleep" or "inn" is chosen
             if (option === "sleep" || option === "inn") {
-                if (option === "sleep" && isMainCharacter) {
-                    setTimeout(() => this.sheet.rollConsumable("hygiene"), 500);
-                }
-        
-                if (this.willpower && this.attributesAreMaxed()) {
-                    this.updateWillpower(1);
-                }
-        
+                this.update({ "system.condition.sleepy.value": false });
+    
+                // Heal critical injuries
+                let criticalInjuryMessages = [];
                 this.items.forEach(item => {
-                    this.handleCriticalInjury(item, criticalInjuryMessages);
-                    this.handleShelfLife(item, shelfLifeMapping, itemsToDelete);
+                    if (item.type === "criticalInjury" && item.system.healingTime.includes("days")) {
+                        let duration = parseInt(item.system.healingTime);
+                        duration--;
+                        
+                        if (duration <= 0) {
+                            this.deleteEmbeddedDocuments("Item", [item.id]);
+                            criticalInjuryMessages.push(`Critical Injury ${item.name} has fully healed and was removed.`);
+                        } else {
+                            item.update({ "system.healingTime": `${duration} days` });
+                            criticalInjuryMessages.push(`Healing time for Critical Injury ${item.name} was reduced by 1 day. ${duration} days remaining.`);
+                        }
+                    }
                 });
+    
+                if (criticalInjuryMessages.length) {
+                    ChatMessage.create({
+                        content: criticalInjuryMessages.join("<br>"),
+                        speaker: { actor: this }
+                    });
+                }
             }
-        
-            if (option === "inn" && this.willpower) {
-                this.updateWillpower(2);
+    
+            if ((option === "sleep" || option === "inn") && this.willpower && this.attributesAreMaxed()) {
+                this.updateWillpower(option === "inn" ? 2 : 1);
             }
-        
+    
             this.update({ system: data });
-            this.handleRestMessages(option, activeConditions, criticalInjuryMessages, itemsToDelete);
+            this.handleRestMessages(option, activeConditions);
         }
-        
+    
         attributesAreMaxed() {
             return (
                 this.system.attribute.strength.value === this.system.attribute.strength.max &&
@@ -271,49 +246,13 @@
                 this.system.attribute.empathy.value === this.system.attribute.empathy.max
             );
         }
-        
+    
         updateWillpower(increase) {
             const newWillpower = Math.min(this.willpower.value + increase, 10);
             this.update({ "system.bio.willpower.value": newWillpower });
         }
-        
-        handleCriticalInjury(item, messages) {
-            if (item.type === "criticalInjury" && item.system.healingTime.includes("days")) {
-                const duration = parseInt(item.system.healingTime);
-                item.update({ "system.healingTime": duration - 1 + " days" });
-                messages.push(`Healing Time of ${item.name} was reduced by 1 day. ${duration - 1} day(s) left until full recovery.<br><br>`);
-                if (duration === 1) {
-                    this.deleteEmbeddedDocuments("Item", [item.id]);
-                }
-            }
-        }
-        
-        handleShelfLife(item, shelfLifeMapping, itemsToDelete) {
-            let shelfLife = item.system.shelfLife;
-            if (shelfLife) {
-                if (typeof shelfLife === "string") {
-                    shelfLife = shelfLifeMapping[shelfLife.toLowerCase()] || parseInt(shelfLife);
-                }
-                if (!isNaN(shelfLife)) {
-                    const newShelfLife = shelfLife - 1;
-        
-                    // Handle deletion if the shelf life reaches 0 before updating the name
-                    if (newShelfLife <= 0) {
-                        itemsToDelete.push(item);
-                    } else {
-                        // Update the item's shelf life value
-                        item.update({ "system.shelfLife": newShelfLife });
-        
-                        // Prepare the new item name
-                        const newName = item.name.replace(/\(\d+ days\)$/, "").trim();
-                        item.update({ "name": `${newName} (${newShelfLife} days)` });
-                    }
-                }
-            }
-        }
-        
-        
-        handleRestMessages(option, activeConditions, criticalInjuryMessages, itemsToDelete) {
+    
+        handleRestMessages(option, activeConditions) {
             const formatter = new Intl.ListFormat(game.i18n.lang, { style: "long" });
             const activeConditionNames = activeConditions.map(([key]) => key);
             
@@ -332,26 +271,16 @@
             if (activeConditionNames.length) {
                 content += `<p>${this.name} ${localizeString("CONDITION.SUFFERING_FROM")} ${formatter.format(activeConditionNames.filter(key => key !== "sleepy").map(key => `<b>${localizeString(this.conditions[key].label)}</b>`))}.</p>`;
             }
-        
-            if (criticalInjuryMessages.length) {
-                content += criticalInjuryMessages.join("");
-            }
-        
-            if (itemsToDelete.length) {
-                const deletedItemsMessage = itemsToDelete.map(item => item.name).join(", ");
-                content += `<p>${localizeString("Shelf Life")}: ${deletedItemsMessage} (${itemsToDelete.length} items deleted).</p>`;
-                this.deleteEmbeddedDocuments("Item", itemsToDelete.map(item => item.id));
-            }
-        
+    
             content += `</div>`;
-        
+    
             ChatMessage.create({
                 content,
                 speaker: { actor: this }
             });
         }
-             
     };
+    
     
 
 
@@ -5511,18 +5440,7 @@
         }
     }
 
-    _getHeaderButtons() {
-        let buttons = super._getHeaderButtons();
-        if (this.actor.isOwner) {
-            buttons = [{
-                label: game.i18n.localize("SHEET.HEADER.REST"),
-                class: "rest-up",
-                icon: "fas fa-bed",
-                onclick: () => this._rest()
-            }].concat(buttons);
-        }
-        return buttons;
-    }
+   
 
     async _rest() {
             let shelfLifeMapping = {
@@ -6326,7 +6244,7 @@ function handleItemReward(actor, itemKey, quantity, prefix = "") {
                     label: "Craft",
                     callback: () => {
                         if (selectedItem) {
-                            console.log(`Crafting ${selectedItem.name} for ${actor.name}`);
+                            
                             handleItemReward(actor, selectedItem.id, 1, "Project");  
                         }
                     },
@@ -6459,10 +6377,10 @@ function handleItemReward(actor, itemKey, quantity, prefix = "") {
                     const newQuantity = actorMaterial.system.quantity - required.quantity;
                     if (newQuantity <= 0) {
                         await actorMaterial.delete();
-                        console.log(`${actorMaterial.name} has been removed from the actor.`);
+                       
                     } else {
                         await actorMaterial.update({ "system.quantity": newQuantity });
-                        console.log(`${required.quantity} of ${actorMaterial.name} has been deducted. New quantity: ${newQuantity}`);
+                       
                     }
                 }
             }
@@ -6500,7 +6418,7 @@ function handleItemReward(actor, itemKey, quantity, prefix = "") {
                         const requiredMaterials = parseMaterials(rawMaterialsString);
         
                         if (hasSufficientMaterials(requiredMaterials, actor)) {
-                            console.log(`Sufficient materials available for ${selectedItem.name}`);
+                            
         
                             let remainingTime = selectedItem.system.time;
                             if (typeof remainingTime === "string") {
@@ -6574,7 +6492,7 @@ function handleItemReward(actor, itemKey, quantity, prefix = "") {
                                                                           </div>`
                                                             });
         
-                                                            console.log(`Crafting successful. Updated item name to: ${finalName} and restored original weight to: ${originalWeight}`);
+                                                           
                                                         } else {
                                                             ChatMessage.create({
                                                                 speaker: ChatMessage.getSpeaker({ actor: actor }),
@@ -6588,7 +6506,7 @@ function handleItemReward(actor, itemKey, quantity, prefix = "") {
                                                             });
                                                             await selectedItem.delete();
                                                             await deductMaterials(requiredMaterials, actor);
-                                                            console.log(`Crafting failed. ${selectedItem.name} has been removed.`);
+                                                            
                                                         }
         
                                                         Hooks.off('diceSoNiceRollComplete', hookId);
@@ -6614,7 +6532,7 @@ function handleItemReward(actor, itemKey, quantity, prefix = "") {
                                             </div>
                                           </div>`
                             });
-                            console.log(`Not enough materials for ${selectedItem.name}. No time was deducted.`);
+                          
                         }
         
                         dialog.close();
@@ -6736,7 +6654,7 @@ function handleItemReward(actor, itemKey, quantity, prefix = "") {
                                         }
                                     }
                                 } else {
-                                    console.log("Roll data is not structured as expected:", roll);
+                                    
                                 }
                             });
                             dialog.close();
@@ -6747,7 +6665,7 @@ function handleItemReward(actor, itemKey, quantity, prefix = "") {
     
             dialog.render(true);
         } else {
-            console.log("No message with 'table-results' class found in the last 5 messages.");
+           
         }
     }
     
@@ -6811,7 +6729,7 @@ function openCookingDialogForMember(member) {
             cancel: {
                 label: "Cancel",
                 callback: () => {
-                    console.log("Cooking action canceled.");
+                    
                 }
             }
         },
@@ -6962,7 +6880,7 @@ async function handleCookingPayment(rollResult) {
             cancel: {
                 label: "Cancel",
                 callback: () => {
-                    console.log("Cooking payment canceled.");
+                    
                 }
             }
         },
@@ -7097,7 +7015,7 @@ function openRationDistributionDialog(rationsCooked, folderSpieler) {
                         content: chatMessage
                     });
 
-                    console.log("Ration distribution completed.");
+                    
                 }
             }
         },
@@ -8031,8 +7949,7 @@ async function updateTimeDisplay() {
     document.querySelectorAll(".time-icon").forEach((icon, index) => {
         if (index === currentTimeIndex) {
             icon.classList.add("active-time");
-            console.log(icon)
-            console.log(`Icon for ${timesOfDay[index]} is active`, icon); // Debugging
+           
         } else {
             icon.classList.remove("active-time");
         }
@@ -8050,29 +7967,12 @@ async function updateTimeDisplay() {
 }
 
 
-// Ensure event listeners are properly attached to icons
-document.querySelectorAll(".time-icon").forEach(icon => {
-    if (game.user.isGM) {
-        icon.addEventListener("click", async (event) => {
-            const newIndex = parseInt(event.currentTarget.getAttribute("data-time-index"));
-            console.log(`Icon with index ${newIndex} clicked`); // Debugging
-            await setTimeIndex(newIndex); // Update the time index
-        });
-    } else {
-        icon.style.cursor = 'default'; // No clicks for non-GMs
-    }
-});
 
 
 async function setTimeIndex(newIndex) {
     // Setze den aktuellen Zeitindex in den Spieleinstellungen
     await game.settings.set('forbidden-lands', 'currentTimeIndex', newIndex);
-    console.log(`Neuer Zeitindex gesetzt: ${newIndex}`); // Debugging
 
-    // Wenn die Zeit von "Nacht" auf "Morgen" wechselt, erhöhe den Tag
-    if (newIndex === 0) {
-        await incrementDay(); // Neue Funktion, um den Tag zu erhöhen
-    }
 
     // Aktualisiere die Anzeige
     updateTimeDisplay(); // Stelle sicher, dass das UI aktualisiert wird
@@ -8121,33 +8021,233 @@ async function incrementDay() {
     let currentMonthIndex = game.settings.get('forbidden-lands', 'currentMonth');
     let currentYear = game.settings.get('forbidden-lands', 'currentYear');
 
-    currentDay++;
+    const shelfLifeMapping = {
+        "one day": 1,
+        "day": 1,
+        "one week": 7,
+        "week": 7,
+        "two weeks": 14,
+        "one month": 45,
+        "month": 45,
+        "two months": 90,
+        "one year": 360,
+        "year": 360,
+        "five years": 1800,
+        "ten years": 3600
+    };
 
-    // Überprüfe, ob das Ende des Monats erreicht wurde
+    function handleShelfLife(item, itemsToDelete) {
+        let shelfLife = item.system.shelfLife;
+        if (shelfLife) {
+            if (typeof shelfLife === "string") {
+                shelfLife = shelfLifeMapping[shelfLife.toLowerCase()] || parseInt(shelfLife);
+            }
+            if (!isNaN(shelfLife)) {
+                const newShelfLife = shelfLife - 1;
+                if (newShelfLife <= 0) {
+                    itemsToDelete.push(item);
+                } else {
+                    const newName = item.name.replace(/\(\d+ days\)$/, "").trim();
+                    item.update({ "system.shelfLife": newShelfLife, "name": `${newName} (${newShelfLife} days)` });
+                }
+            }
+        }
+    }
+
+    async function handleProductionAndHirelings(actor) {
+        let newItems = [];
+        let hirelingCosts = { copper: 0, silver: 0, gold: 0 };
+        let canPayHirelings = true;
+        let buildingRoll = false;
+        let housingMessageTrue = false;
+        let totalHousing = 0; // Variable für das gesamte Housing
+        let messageParts = []; // Sammlung für Nachrichten
+
+        let food = ["Meat", "Fish", "Bread", "Vegetables", "Egg", "Eggs"];
+        let hasFoodItem = actor.items.some(item => food.includes(item.name));
+
+        let daysAlive = actor.system.daysalive || 0;
+        await actor.update({
+            "system.daysalive": daysAlive + 1
+        });
+
+        // Nachricht alle 7 Tage
+        if ((daysAlive + 1) % 7 === 0) {
+            messageParts.push("Made it through another day without any events, or did it...");
+        }
+
+        for (let item of actor.items) {
+            let productionQuantity = parseInt(item.system.quantity);
+            let shelfLife = item.system.shelfLife;
+
+            if (item.type === "building" && item.name.includes("finished")) {
+                let housing = parseInt(item.system.housing);
+                if (!isNaN(housing)) {
+                    totalHousing += housing * item.system.quantity; // Summiere Housing-Werte der fertigen Gebäude
+                }
+            }
+
+            if (item.type === "building") {
+                let buildingTime = item.system.time;
+
+                if (typeof buildingTime !== 'number') {
+                    buildingTime = shelfLifeMapping[buildingTime.toLowerCase()] || parseInt(buildingTime) || 0;
+                }
+
+                if (buildingTime > 0) {
+                    await item.update({
+                        "system.time": buildingTime - 1,
+                        "name": `${item.name.split(" (")[0]} (${buildingTime - 1} day(s) left until finish)`
+                    });
+                } else {
+                    await item.update({
+                        "name": `${item.name.split(" (")[0]} (finished)`
+                    });
+                }
+
+                if (buildingTime == 1) {
+                    buildingRoll = true;
+                }
+            }
+
+            if (item.type === "hireling") {
+                if (item.system.salary.includes("Copper")) {
+                    hirelingCosts.copper += parseInt(item.system.salary) * productionQuantity;
+                }
+                if (item.system.salary.includes("Silver")) {
+                    hirelingCosts.silver += parseInt(item.system.salary) * productionQuantity;
+                }
+                if (item.system.salary.includes("Gold")) {
+                    hirelingCosts.gold += parseInt(item.system.salary) * productionQuantity;
+                }
+                if (item.system.salary.includes("Housing")) {
+                    totalHousing -= productionQuantity; // Subtrahiere die Anzahl der Hirelings, die Housing benötigen
+                }
+            }
+
+            if (item.name.startsWith("Production")) {
+                shelfLife = shelfLifeMapping[shelfLife.toLowerCase()] || parseInt(shelfLife);
+                let newItemName = item.name.replace(/^Production\s*/, '');
+                let existingItem = actor.items.find(i => i.name === newItemName);
+
+                let maxQuantity = shelfLife * productionQuantity;
+
+                if (existingItem) {
+                    let existingQuantity = parseInt(existingItem.system.quantity);
+                    let newQuantity = existingQuantity + productionQuantity;
+
+                    if (newQuantity > maxQuantity) {
+                        newQuantity = maxQuantity;
+                    }
+
+                    await existingItem.update({
+                        "system.quantity": newQuantity
+                    });
+                } else {
+                    let newItemData = duplicate(item);
+                    newItemData.name = newItemName;
+                    newItemData.system.quantity = Math.min(productionQuantity, maxQuantity);
+                    newItems.push(newItemData);
+                }
+            }
+        }
+
+        // Aktualisiere die Housing-Informationen des Akteurs
+        await actor.update({
+            "system.housing": totalHousing
+        });
+
+        for (let currency of ["copper", "silver", "gold"]) {
+            let currencyValue = actor.system.currency[currency]?.value || 0;
+            let cost = hirelingCosts[currency];
+            if (cost > 0) {
+                let newQuantity = Math.max(0, currencyValue - cost);
+                await actor.update({ [`system.currency.${currency}.value`]: newQuantity });
+                if (newQuantity === 0) {
+                    canPayHirelings = false;
+                }
+            }
+        }
+
+        if (newItems.length > 0) {
+            await actor.createEmbeddedDocuments("Item", newItems);
+            messageParts.push(`New items created: ${newItems.map(i => i.name).join(", ")}.`);
+        }
+
+        if (buildingRoll) {
+            messageParts.push("Building is ready. Make Crafting Roll.");
+        }
+
+        if (!canPayHirelings) {
+            messageParts.push("Couldn't pay all hirelings.");
+        } else {
+            messageParts.push("Hirelings were paid.");
+        }
+
+        if (totalHousing < 0) {
+            messageParts.push("Not enough housing available for hirelings.");
+        }
+
+        if (!hasFoodItem) {
+            messageParts.push("No food left in the Stronghold.");
+        }
+
+        // Nur für Stronghold-Akteure eine Chat-Nachricht senden
+        if (messageParts.length > 0 && actor.type === 'stronghold') {
+            let messageContent = `<div class="forbidden-lands chat-item">
+                ${messageParts.map(part => `<p>${part}</p>`).join("")}
+            </div>`;
+
+            ChatMessage.create({ content: messageContent, speaker: { actor: actor } });
+        }
+    }
+
+    let playerFolder = game.folders.find(folder => folder.name === "Spieler" && folder.type === "Actor");
+    let strongholdFolder = game.folders.find(folder => folder.name === "Strongholds" && folder.type === "Actor");
+
+    let players = playerFolder ? playerFolder.contents : [];
+    let strongholds = strongholdFolder ? strongholdFolder.contents : [];
+
+    function processActors(actors) {
+        actors.forEach(async (actor) => {
+            let actorItems = actor.items;
+            let itemsToDelete = [];
+            if (actor.type !== 'stronghold') {
+                actorItems.forEach(actorItem => {
+                    handleShelfLife(actorItem, itemsToDelete);
+                });
+                if (itemsToDelete.length > 0) {
+                    actor.deleteEmbeddedDocuments("Item", itemsToDelete.map(item => item.id));
+                }
+            }
+            await handleProductionAndHirelings(actor);
+        });
+    }
+
+    processActors(players);
+    processActors(strongholds);
+
+    currentDay++;
     if (currentDay > daysPerMonth) {
         currentDay = 1;
         currentMonthIndex++;
-
-        // Überprüfe, ob das Ende des Jahres erreicht wurde
         if (currentMonthIndex >= months.length) {
             currentMonthIndex = 0;
             currentYear++;
         }
     }
 
-    // Setze den neuen Tag, Monat und Jahr in den Einstellungen
     await game.settings.set('forbidden-lands', 'currentDay', currentDay);
     await game.settings.set('forbidden-lands', 'currentMonth', currentMonthIndex);
     await game.settings.set('forbidden-lands', 'currentYear', currentYear);
 
-    console.log(`Neues Datum gesetzt: ${currentDay}. ${months[currentMonthIndex]} ${currentYear}`);
-
-    // Aktualisiere die Anzeige
     updateDateDisplay();
-
-    // Check which actors have rolled for food and water at the end of the day (only player-controlled actors)
     await endOfDayConsumablesCheck();
 }
+
+
+
+
 
 
 
@@ -8356,12 +8456,44 @@ async function showConsumablesInfo() {
         if (game.user.isGM) {
             icon.addEventListener("click", async (event) => {
                 const newIndex = parseInt(event.currentTarget.getAttribute("data-time-index"));
-                await setTimeIndex(newIndex);
+    
+                // Überprüfen, ob der Benutzer auf "Morgen" klickt (Index 0)
+                if (newIndex === 0) {
+                    // Öffne einen Bestätigungsdialog
+                    new Dialog({
+                        title: "Neuen Tag starten?",
+                        content: "<p>Möchten Sie einen neuen Tag starten?</p>",
+                        buttons: {
+                            yes: {
+                                icon: '<i class="fas fa-check"></i>',
+                                label: "Ja",
+                                callback: async () => {
+                                    // Wenn "Ja", den Tag erhöhen und auf "Morgen" wechseln
+                                    await incrementDay();
+                                    await setTimeIndex(0); // Setze Zeit auf "Morgen"
+                                }
+                            },
+                            no: {
+                                icon: '<i class="fas fa-times"></i>',
+                                label: "Nein",
+                                callback: async () => {
+                                    // Wenn "Nein", einfach auf "Morgen" wechseln
+                                    await setTimeIndex(0); // Setze Zeit auf "Morgen"
+                                }
+                            }
+                        },
+                        default: "no"
+                    }).render(true); // Korrekte Verwendung des Dialogs
+                } else {
+                    // Setze die Zeit, wenn nicht auf "Morgen" geklickt wurde
+                    await setTimeIndex(newIndex);
+                }
             });
         } else {
-            icon.style.cursor = 'default';
+            icon.style.cursor = 'default'; // Nicht klickbar für Nicht-GMs
         }
     });
+    
 
     if (game.user.isGM) {
         document.getElementById("toggle-darkness").addEventListener("change", async () => {
