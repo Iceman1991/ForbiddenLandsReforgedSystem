@@ -154,6 +154,8 @@
             }
             return false;
         }
+
+
         rest() {
             // Create a dialog for the player to choose between resting, sleeping, or staying in an inn
             new Dialog({
@@ -5151,6 +5153,8 @@
         }
 
     };
+
+
     init_define_GLOBALPATHS();
     var ForbiddenLandsMonsterSheet = class extends ForbiddenLandsActorSheet {
         static get defaultOptions() {
@@ -5402,70 +5406,125 @@
 
 
     var ForbiddenLandsStrongholdSheet = class extends ForbiddenLandsActorSheet {
-        static get defaultOptions() {
-            return mergeObject(super.defaultOptions, {
-                classes: ["forbidden-lands", "sheet", "actor"],
-                template: "systems/forbidden-lands/templates/actor/stronghold/stronghold-sheet.hbs",
-                width: 650,
-                height: 700,
-                resizable: true,
-                scrollY: [".buildings.item-list .items", ".hirelings.item-list .items", ".gears.item-listing .items"],
-                tabs: [{
-                    navSelector: ".sheet-tabs",
-                    contentSelector: ".sheet-body",
-                    initial: "building"
-                }]
-            });
-        }
+    static get defaultOptions() {
+        return mergeObject(super.defaultOptions, {
+            classes: ["forbidden-lands", "sheet", "actor"],
+            template: "systems/forbidden-lands/templates/actor/stronghold/stronghold-sheet.hbs",
+            width: 650,
+            height: 700,
+            resizable: true,
+            scrollY: [".buildings.item-list .items", ".hirelings.item-list .items", ".gears.item-listing .items"],
+            tabs: [{
+                navSelector: ".sheet-tabs",
+                contentSelector: ".sheet-body",
+                initial: "building"
+            }]
+        });
+    }
 
-        async getData() {
-            let actorData = await super.getData();
-            actorData.system.description = await TextEditor.enrichHTML(actorData.system.description, {
-                async: true
-            });
-            this._computeItems(actorData);
-            return actorData;
-        }
+    async getData() {
+        let actorData = await super.getData();
+        actorData.system.description = await TextEditor.enrichHTML(actorData.system.description, {
+            async: true
+        });
+        this._computeItems(actorData);
+        return actorData;
+    }
 
-        _computeItems(data) {
-            for (let item of Object.values(data.items)) {
-                item.isWeapon = item.type === "weapon";
-                item.isArmor = item.type === "armor";
-                item.isGear = item.type === "gear";
-                item.isRawMaterial = item.type === "rawMaterial";
-                item.isBuilding = item.type === "building";
-                item.isHireling = item.type === "hireling";
-                if (item.type !== "building" && item.type !== "hireling") {
-                    item.totalWeight = (CONFIG.fbl.encumbrance[item.system.weight] ?? item.system.weight ?? 1) * (item.system.quantity ?? 1);
-                }
+    _computeItems(data) {
+        for (let item of Object.values(data.items)) {
+            item.isWeapon = item.type === "weapon";
+            item.isArmor = item.type === "armor";
+            item.isGear = item.type === "gear";
+            item.isRawMaterial = item.type === "rawMaterial";
+            item.isBuilding = item.type === "building";
+            item.isHireling = item.type === "hireling";
+            if (item.type !== "building" && item.type !== "hireling") {
+                item.totalWeight = (CONFIG.fbl.encumbrance[item.system.weight] ?? item.system.weight ?? 1) * (item.system.quantity ?? 1);
             }
         }
+    }
 
-        activateListeners(html) {
-            super.activateListeners(html);
-            html.find("details").on("click", e => {
-                let detail = $(e.target).closest("details"),
-                    content = detail.find("summary ~ *");
-                detail.attr("open") ? (e.preventDefault(), content.slideUp(200), setTimeout(() => {
-                    detail.removeAttr("open")
-                }, 200)) : content.slideDown(200);
+    activateListeners(html) {
+        super.activateListeners(html);
+        
+        // Monitor changes in currency buttons
+        html.find(".currency-button").on("click contextmenu", ev => {
+            this.updateCurrency(ev);
+        });
+
+        // Monitor direct input changes in currency fields
+        html.find("input[name^='system.currency']").on("change", ev => {
+            this.updateCurrency(ev, true);
+        });
+
+        html.find("details").on("click", e => {
+            let detail = $(e.target).closest("details"),
+                content = detail.find("summary ~ *");
+            detail.attr("open") ? (e.preventDefault(), content.slideUp(200), setTimeout(() => {
+                detail.removeAttr("open")
+            }, 200)) : content.slideDown(200);
+        });
+    }
+
+    async updateCurrency(ev, isInput = false) {
+        if (isInput) {
+            // Wenn die Änderung aus Eingabefeldern kommt
+            let fieldName = ev.target.name;
+            let newValue = parseInt(ev.target.value);
+            let oldValue = getProperty(this.actor.data, fieldName);
+    
+            await this.actor.update({
+                [fieldName]: newValue
+            });
+    
+            // Nachricht an den Chat senden
+            let currencyType = fieldName.split('.')[2];
+            let messageContent = `<span style="color: red;">${this.actor.name} hat die Währung geändert: ${currencyType.charAt(0).toUpperCase() + currencyType.slice(1)} von ${oldValue} auf ${newValue}</span>`;
+            ChatMessage.create({
+                content: messageContent,
+                speaker: { actor: this.actor }
+            });
+        } else {
+            // Wenn die Änderung durch Buttons kommt
+            let currency = $(ev.currentTarget).data("currency");
+            let operator = $(ev.currentTarget).data("operator");
+            let modifier = ev.type === "contextmenu" ? 5 : 1;
+            let coins = [this.actor.system.currency.gold.value, this.actor.system.currency.silver.value, this.actor.system.currency.copper.value];
+            let i = { gold: 0, silver: 1, copper: 2 }[currency];
+            if (operator === "plus") coins[i] += modifier;
+            else {
+                for (coins[i] -= modifier; i >= 0; --i) coins[i] < 0 && i > 0 && (coins[i - 1] -= 1, coins[i] += 10);
+            }
+            coins[0] >= 0 && await this.actor.update({
+                "system.currency.gold.value": coins[0],
+                "system.currency.silver.value": coins[1],
+                "system.currency.copper.value": coins[2]
+            });
+
+            // Nachricht an den Chat senden
+            let messageContent = `<span style="color: red;">${this.actor.name} hat ${modifier} ${currency} ${operator === "plus" ? "hinzugefügt" : "entfernt"}.</span>`;
+            ChatMessage.create({
+                content: messageContent,
+                speaker: { actor: this.actor }
             });
         }
+    }
 
-        _getHeaderButtons() {
-            let buttons = super._getHeaderButtons();
-            if (this.actor.isOwner) {
-                buttons = [{
-                    label: game.i18n.localize("SHEET.HEADER.REST"),
-                    class: "rest-up",
-                    icon: "fas fa-bed",
-                    onclick: () => this._rest()
-                }].concat(buttons);
-            }
-            return buttons;
+    _getHeaderButtons() {
+        let buttons = super._getHeaderButtons();
+        if (this.actor.isOwner) {
+            buttons = [{
+                label: game.i18n.localize("SHEET.HEADER.REST"),
+                class: "rest-up",
+                icon: "fas fa-bed",
+                onclick: () => this._rest()
+            }].concat(buttons);
         }
+        return buttons;
+    }
 
-        async _rest() {
+    async _rest() {
             let shelfLifeMapping = {
                 "-": 9999999,
                 "one day": 1,
@@ -5754,6 +5813,8 @@
         }
     };
 
+
+    
 
 
 

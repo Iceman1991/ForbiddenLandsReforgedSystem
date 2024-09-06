@@ -1,4 +1,19 @@
 <div class="flex column full">
+	<!-- Currency Section -->
+	<div class="currencies border">
+        <div class="header flex grow row">
+            <b>{{localize "HEADER.CURRENCY"}}</b>
+            <div class="values">
+                {{#each system.currency as |object currency|}}
+                    <label>{{localize object.label}}:</label>
+                    <input name="system.currency.{{currency}}.value" min="0" type="number" data-dtype="Number" value="{{object.value}}" />
+                {{/each}}
+                <button type="button" class="item-control currency-transfer" title="{{localize "GEAR.POST"}}"><i
+					class="fas fa-right-left"></i></button>
+            </div>
+        </div>
+    </div>
+
 	<div class="gears item-list border grow">
 		<div class="items">
 			<div class="header flex row">
@@ -81,7 +96,7 @@
 						<a class="item-control item-post" title="{{localize "GEAR.POST"}}"><i class="fas fa-comment"></i></a>
 						<a class="item-control item-transfer" title="{{localize "GEAR.TRANSFER"}}"><i class="fas fa-right-left"></i></a>
 						<a class="item-control item-delete" title="{{localize "GEAR.DELETE"}}"><i class="fas fa-trash"></i></a>
-				</div>
+					</div>
 				</div>
 				{{/if}} {{/each}}
 			</div>

@@ -3801,22 +3801,29 @@ a.card-control>i.fa-caret-down,a.card-control>i.fa-caret-up{
 	font-size:var(--font-size-16);
 	translate:0 2px
 }
-.forbidden-lands .gear-tab .currencies .header{
+
+.currencies {
+	border: 6px solid transparent!important;
+    border-image: url(./assets/journal-art/small-border.webp) 100/10px repeat!important;
+	margin-bottom: 10px!important;
+}
+
+ .currencies .header{
 	font-variant:small-caps;
 	justify-content:space-between;
 	align-items:center;
 	padding:8px
 }
-.forbidden-lands .gear-tab .currencies .header b{
+.currencies .header b{
 	font-family:var(--font-special);
 	font-size:var(--font-size-16)
 }
-.forbidden-lands .gear-tab .currencies .values label{
+ .currencies .values label{
 	font-family:var(--font-special);
 	font-variant:normal;
 	margin:0 8px 0 16px
 }
-.forbidden-lands .gear-tab .currencies .values input{
+ .currencies .values input{
 	width:3em
 }
 .forbidden-lands .gear-tab .consumables .consumable {
