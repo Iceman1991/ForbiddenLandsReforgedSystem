@@ -107,7 +107,9 @@
     </section>
 
     {{#unless (or (eq system.subtype.type "npc") (eq type 'monster'))}}
+    
     <div class="consumables border">
+        
         {{#each system.consumable as |consumable key|}}
             <div class="consumable">
                 <button type="button" class="roll-consumable"
@@ -129,10 +131,15 @@
             </div>
         {{/each}}
     </div>
-	  <!-- Toggle button at the bottom -->
+    <div class="flex" style="justify-content: center;">
+  <button type="button" class="item-control consumables-transfer" title="{{localize "GEAR.POST"}}"><i
+					class="fas fa-right-left"></i></button>
     <button id="toggle-consumables" type="button" class="toggle-button">
         Toggle Consumables
     </button>
+    </div>
+	  <!-- Toggle button at the bottom -->
+    
     {{/unless}}
 
   

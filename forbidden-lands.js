@@ -206,28 +206,6 @@
                 this.update({ "system.condition.sleepy.value": false });
     
                 // Heal critical injuries
-                let criticalInjuryMessages = [];
-                this.items.forEach(item => {
-                    if (item.type === "criticalInjury" && item.system.healingTime.includes("days")) {
-                        let duration = parseInt(item.system.healingTime);
-                        duration--;
-                        
-                        if (duration <= 0) {
-                            this.deleteEmbeddedDocuments("Item", [item.id]);
-                            criticalInjuryMessages.push(`Critical Injury ${item.name} has fully healed and was removed.`);
-                        } else {
-                            item.update({ "system.healingTime": `${duration} days` });
-                            criticalInjuryMessages.push(`Healing time for Critical Injury ${item.name} was reduced by 1 day. ${duration} days remaining.`);
-                        }
-                    }
-                });
-    
-                if (criticalInjuryMessages.length) {
-                    ChatMessage.create({
-                        content: criticalInjuryMessages.join("<br>"),
-                        speaker: { actor: this }
-                    });
-                }
             }
     
             if ((option === "sleep" || option === "inn") && this.willpower && this.attributesAreMaxed()) {
@@ -257,7 +235,7 @@
             const activeConditionNames = activeConditions.map(([key]) => key);
             
             let content = `
-                <div class="forbidden-lands chat-item">
+                <div class="forbidden-lands chat-item dice-roll">
                     <img src="${this.img}" alt="">
                     <h3>${this.name}</h3>
                     <h4>${localizeString("ACTION.REST")}</h4>
@@ -4461,6 +4439,199 @@
                     default: "transfer"
                 }).render(true);
             }),
+
+
+            html.find(".consumables-transfer").click(async ev => {
+                let currentActorId = this.actor.id;  // ID des aktuellen Actors
+            
+                // Den Ordner "Spieler" finden
+                let playerFolder = game.folders.find(folder => folder.name === "Spieler" && folder.type === "Actor");
+                // Den Ordner "Strongholds" finden
+                let strongholdsFolder = game.folders.find(folder => folder.name === "Strongholds" && folder.type === "Actor");
+            
+                // Actors in den Ordnern "Spieler" und "Strongholds" filtern
+                let playerActors = [];
+                if (playerFolder) {
+                    playerActors = game.actors.contents.filter(actor => actor.folder?.id === playerFolder.id && actor.id !== currentActorId);
+                }
+            
+                let strongholdActors = [];
+                if (strongholdsFolder) {
+                    strongholdActors = game.actors.contents.filter(actor => actor.folder?.id === strongholdsFolder.id);
+                }
+            
+                // Gamemaster finden
+                let gmUser = game.users.find(u => u.isGM);
+            
+                // Erstellen der Optionen für das Dropdown mit einem Trennstrich und dem Gamemaster
+                let playerOptions = playerActors.map(actor => `<option value="${actor.id}">${actor.name}</option>`).join("");
+                let strongholdOptions = strongholdActors.map(actor => `<option value="${actor.id}">${actor.name}</option>`).join("");
+                let gmOption = gmUser ? `<option value="gm">Gamemaster</option>` : "";
+            
+                let options = `
+                    ${playerOptions}
+                    <option disabled>──────────</option>
+                    ${strongholdOptions}
+                    <option disabled>──────────</option>
+                    ${gmOption}
+                `;
+            
+                // Dropdown-Auswahl für Mengen generieren mit dem aktuellen maximalen Wert des Consumables
+                function createDropdownOptions(maxValue, currentValue) {
+                    let dropdownOptions = "";
+                    for (let i = 0; i <= Math.min(maxValue, 4 - currentValue); i++) {
+                        dropdownOptions += `<option value="${i}" ${i === 0 ? "selected" : ""}>${i}</option>`;
+                    }
+                    return dropdownOptions;
+                }
+            
+                // Ein HTML-Formular für die Consumables-Übertragung erstellen
+                let content = `
+                    <form>
+                        <div class="form-group">
+                            <label>Transfer Consumables to:</label>
+                            <select id="actor-select">${options}</select>
+                        </div>
+                        <div class="form-group">
+                            <label>Arrows:</label>
+                            <select id="arrows-select">
+                                ${createDropdownOptions(this.actor.system.consumable.arrows.value, 0)}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Food:</label>
+                            <select id="food-select">
+                                ${createDropdownOptions(this.actor.system.consumable.food.value, 0)}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Torches:</label>
+                            <select id="torches-select">
+                                ${createDropdownOptions(this.actor.system.consumable.torches.value, 0)}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Water:</label>
+                            <select id="water-select">
+                                ${createDropdownOptions(this.actor.system.consumable.water.value, 0)}
+                            </select>
+                        </div>
+                    </form>
+                `;
+            
+                // Den Dialog anzeigen
+                new Dialog({
+                    title: "Transfer Consumables",
+                    content: content,
+                    buttons: {
+                        transfer: {
+                            icon: '<i class="fas fa-exchange-alt"></i>',
+                            label: "Transfer",
+                            callback: async html => {
+                                // Den ausgewählten Actor ermitteln
+                                let actorId = html.find("#actor-select").val();
+                                let arrowsTransfer = parseInt(html.find("#arrows-select").val(), 10);
+                                let foodTransfer = parseInt(html.find("#food-select").val(), 10);
+                                let torchesTransfer = parseInt(html.find("#torches-select").val(), 10);
+                                let waterTransfer = parseInt(html.find("#water-select").val(), 10);
+            
+                                let targetActor = actorId !== "gm" ? game.actors.get(actorId) : null;
+            
+                                // Überprüfen, ob die übertragene Menge gültig ist (nicht mehr als 4 beim Ziel)
+                                if (targetActor) {
+                                    if ((targetActor.system.consumable.arrows.value + arrowsTransfer > 4) || 
+                                        (targetActor.system.consumable.food.value + foodTransfer > 4) || 
+                                        (targetActor.system.consumable.torches.value + torchesTransfer > 4) || 
+                                        (targetActor.system.consumable.water.value + waterTransfer > 4)) {
+                                        ui.notifications.error("Das Ziel kann nicht mehr als 4 von einem Consumable haben.");
+                                        return;
+                                    }
+                                }
+            
+                                // Überprüfen, ob die übertragene Menge gültig ist
+                                if (arrowsTransfer > this.actor.system.consumable.arrows.value || 
+                                    foodTransfer > this.actor.system.consumable.food.value || 
+                                    torchesTransfer > this.actor.system.consumable.torches.value || 
+                                    waterTransfer > this.actor.system.consumable.water.value) {
+                                    ui.notifications.error("Die übertragene Menge darf nicht größer sein als die vorhandene Menge.");
+                                    return;
+                                }
+            
+                                if (actorId === "gm") {
+                                    // Transfer an den Gamemaster: Consumables einfach abziehen, ohne sie einem Actor gutzuschreiben
+                                    await this.actor.update({
+                                        "system.consumable.arrows.value": this.actor.system.consumable.arrows.value - arrowsTransfer,
+                                        "system.consumable.food.value": this.actor.system.consumable.food.value - foodTransfer,
+                                        "system.consumable.torches.value": this.actor.system.consumable.torches.value - torchesTransfer,
+                                        "system.consumable.water.value": this.actor.system.consumable.water.value - waterTransfer
+                                    });
+            
+                                    // Chatnachricht für den Transfer an den Gamemaster
+                                    let chatMessage = `
+                                        <div style="text-align: center;">
+                                            <i class="fa-solid fa-right-left" style="font-size: 42px; line-height: 42px; display: inline-block; margin-bottom: 10px"></i>
+                                        </div>
+                                        <div style="text-align: center;">
+                                            ${arrowsTransfer} Arrows, ${foodTransfer} Food, ${torchesTransfer} Torches, and ${waterTransfer} Water have been transferred from ${this.actor.name} to the Gamemaster.
+                                        </div>
+                                    `;
+            
+                                    ChatMessage.create({
+                                        user: game.user.id,
+                                        speaker: ChatMessage.getSpeaker({ actor: this.actor }),
+                                        content: chatMessage
+                                    });
+            
+                                } else {
+                                    // Transfer an einen anderen Actor
+                                    if (targetActor) {
+                                        // Consumables beim Ziel-Schauspieler hinzufügen
+                                        await targetActor.update({
+                                            "system.consumable.arrows.value": targetActor.system.consumable.arrows.value + arrowsTransfer,
+                                            "system.consumable.food.value": targetActor.system.consumable.food.value + foodTransfer,
+                                            "system.consumable.torches.value": targetActor.system.consumable.torches.value + torchesTransfer,
+                                            "system.consumable.water.value": targetActor.system.consumable.water.value + waterTransfer
+                                        });
+            
+                                        // Consumables beim aktuellen Schauspieler abziehen
+                                        await this.actor.update({
+                                            "system.consumable.arrows.value": this.actor.system.consumable.arrows.value - arrowsTransfer,
+                                            "system.consumable.food.value": this.actor.system.consumable.food.value - foodTransfer,
+                                            "system.consumable.torches.value": this.actor.system.consumable.torches.value - torchesTransfer,
+                                            "system.consumable.water.value": this.actor.system.consumable.water.value - waterTransfer
+                                        });
+            
+                                        // Chatnachricht für den Transfer an den Ziel-Schauspieler
+                                        let chatMessage = `
+                                            <div style="text-align: center;">
+                                                <i class="fa-solid fa-right-left" style="font-size: 42px; line-height: 42px; display: inline-block; margin-bottom: 10px"></i>
+                                            </div>
+                                            <div style="text-align: center;">
+                                                ${arrowsTransfer} Arrows, ${foodTransfer} Food, ${torchesTransfer} Torches, and ${waterTransfer} Water have been transferred from ${this.actor.name} to ${targetActor.name}.
+                                            </div>
+                                        `;
+            
+                                        ChatMessage.create({
+                                            user: game.user.id,
+                                            speaker: ChatMessage.getSpeaker({ actor: this.actor }),
+                                            content: chatMessage
+                                        });
+                                    }
+                                }
+                            }
+                        },
+                        cancel: {
+                            icon: '<i class="fas fa-times"></i>',
+                            label: "Cancel"
+                        }
+                    },
+                    default: "transfer"
+                }).render(true);
+            }),
+            
+            
+            
+            
             
                   
             
@@ -5711,7 +5882,7 @@
 
 
             let chatMessageContent = `
-            <div class="forbidden-lands chat-item">
+            <div class="forbidden-lands chat-item dice-roll">
                 <img src="${this.actor.img}" alt="">
                 ${eventsAtTheStronghold}
                 ${buildingMessage ? `<p>${buildingMessage}</p>` : ''}
@@ -8054,14 +8225,38 @@ async function incrementDay() {
         }
     }
 
+    async function handleCriticalInjuries(actor) {
+        let criticalInjuryMessages = [];
+        for (let item of actor.items) {
+            if (item.type === "criticalInjury" && item.system.healingTime.includes("days")) {
+                let duration = parseInt(item.system.healingTime);
+                duration--;
+                
+                if (duration <= 0) {
+                    await actor.deleteEmbeddedDocuments("Item", [item.id]);
+                    criticalInjuryMessages.push(`Critical Injury ${item.name} has fully healed and was removed.`);
+                } else {
+                    await item.update({ "system.healingTime": `${duration} days` });
+                    criticalInjuryMessages.push(`Healing time for Critical Injury ${item.name} was reduced by 1 day. ${duration} days remaining.`);
+                }
+            }
+        }
+
+        if (criticalInjuryMessages.length > 0) {
+            ChatMessage.create({
+                content: criticalInjuryMessages.join("<br>"),
+                speaker: { actor: actor }
+            });
+        }
+    }
+
     async function handleProductionAndHirelings(actor) {
         let newItems = [];
         let hirelingCosts = { copper: 0, silver: 0, gold: 0 };
         let canPayHirelings = true;
         let buildingRoll = false;
-        let housingMessageTrue = false;
-        let totalHousing = 0; // Variable für das gesamte Housing
-        let messageParts = []; // Sammlung für Nachrichten
+        let totalHousing = 0; 
+        let messageParts = []; 
 
         let food = ["Meat", "Fish", "Bread", "Vegetables", "Egg", "Eggs"];
         let hasFoodItem = actor.items.some(item => food.includes(item.name));
@@ -8071,7 +8266,6 @@ async function incrementDay() {
             "system.daysalive": daysAlive + 1
         });
 
-        // Nachricht alle 7 Tage
         if ((daysAlive + 1) % 7 === 0) {
             messageParts.push("Made it through another day without any events, or did it...");
         }
@@ -8083,7 +8277,7 @@ async function incrementDay() {
             if (item.type === "building" && item.name.includes("finished")) {
                 let housing = parseInt(item.system.housing);
                 if (!isNaN(housing)) {
-                    totalHousing += housing * item.system.quantity; // Summiere Housing-Werte der fertigen Gebäude
+                    totalHousing += housing * item.system.quantity;
                 }
             }
 
@@ -8121,7 +8315,7 @@ async function incrementDay() {
                     hirelingCosts.gold += parseInt(item.system.salary) * productionQuantity;
                 }
                 if (item.system.salary.includes("Housing")) {
-                    totalHousing -= productionQuantity; // Subtrahiere die Anzahl der Hirelings, die Housing benötigen
+                    totalHousing -= productionQuantity; 
                 }
             }
 
@@ -8152,7 +8346,6 @@ async function incrementDay() {
             }
         }
 
-        // Aktualisiere die Housing-Informationen des Akteurs
         await actor.update({
             "system.housing": totalHousing
         });
@@ -8192,9 +8385,8 @@ async function incrementDay() {
             messageParts.push("No food left in the Stronghold.");
         }
 
-        // Nur für Stronghold-Akteure eine Chat-Nachricht senden
         if (messageParts.length > 0 && actor.type === 'stronghold') {
-            let messageContent = `<div class="forbidden-lands chat-item">
+            let messageContent = `<div class="forbidden-lands chat-item dice-roll">
                 ${messageParts.map(part => `<p>${part}</p>`).join("")}
             </div>`;
 
@@ -8208,24 +8400,24 @@ async function incrementDay() {
     let players = playerFolder ? playerFolder.contents : [];
     let strongholds = strongholdFolder ? strongholdFolder.contents : [];
 
-    function processActors(actors) {
-        actors.forEach(async (actor) => {
-            let actorItems = actor.items;
+    async function processActors(actors) {
+        for (let actor of actors) {
             let itemsToDelete = [];
             if (actor.type !== 'stronghold') {
-                actorItems.forEach(actorItem => {
+                for (let actorItem of actor.items) {
                     handleShelfLife(actorItem, itemsToDelete);
-                });
+                }
                 if (itemsToDelete.length > 0) {
-                    actor.deleteEmbeddedDocuments("Item", itemsToDelete.map(item => item.id));
+                    await actor.deleteEmbeddedDocuments("Item", itemsToDelete.map(item => item.id));
                 }
             }
             await handleProductionAndHirelings(actor);
-        });
+            await handleCriticalInjuries(actor); // Handle critical injuries here
+        }
     }
 
-    processActors(players);
-    processActors(strongholds);
+    await processActors(players);
+    await processActors(strongholds);
 
     currentDay++;
     if (currentDay > daysPerMonth) {
@@ -8244,6 +8436,7 @@ async function incrementDay() {
     updateDateDisplay();
     await endOfDayConsumablesCheck();
 }
+
 
 
 
@@ -8575,23 +8768,45 @@ async function showConsumablesInfo() {
 ///day tracker
 
 
-class EventEmitter {
-    constructor() {
-        this.events = {};
-    }
+// class EventEmitter {
+//     constructor() {
+//         this.events = {};
+//     }
 
-    on(event, listener) {
-        if (!this.events[event]) {
-            this.events[event] = [];
-        }
-        this.events[event].push(listener);
-    }
+//     on(event, listener) {
+//         if (!this.events[event]) {
+//             this.events[event] = [];
+//         }
+//         this.events[event].push(listener);
+//     }
 
-    emit(event, args) {
-        if (this.events[event]) {
-            this.events[event].forEach(listener => listener(args));
-        }
-    }
-}
+//     emit(event, args) {
+//         if (this.events[event]) {
+//             this.events[event].forEach(listener => listener(args));
+//         }
+//     }
+// }
 
-const eventEmitter = new EventEmitter();
+// const eventEmitter = new EventEmitter();
+
+
+
+
+
+Hooks.on('getSceneControlButtons', controls => {
+    // Suchen der Main Controls (meist die ersten Controls)
+    let mainControls = controls.find(control => control.name === "token");
+    
+    if (mainControls) {
+      // Neue Schaltfläche hinzufügen
+      mainControls.tools.push({
+        name: "custom-button",
+        title: "Custom Button",
+        icon: "fas fa-hand-sparkles", // Font Awesome Icon
+        button: true,
+        onClick: () => console.log("Custom button clicked!"),
+        visible: true
+      });
+    }
+  });
+  
