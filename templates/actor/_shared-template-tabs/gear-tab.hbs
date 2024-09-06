@@ -54,23 +54,28 @@
 	</table>
 {{/inline}}
 
+ 
 {{#*inline "currency" object currency}}
 	<label>{{localize object.label}}:</label>
-	 
 	<input name="system.currency.{{currency}}.value" min="0" type="number" data-dtype="Number" value="{{object.value}}" />
 	
 {{/inline}}
 
 <!-- Tab markup -->
 <div class="gear-tab">
+   
     {{#unless (eq type 'monster')}}
     <div class="currencies border">
         <div class="header flex grow row">
             <b>{{localize "HEADER.CURRENCY"}}</b>
             <div class="values">
+                
+           
                 {{#each system.currency as |object currency|}}
                     {{> currency object=object currency=currency}}
                 {{/each}}
+                      <button type="button" class="item-control currency-transfer" title="{{localize "GEAR.POST"}}"><i
+					class="fas fa-right-left"></i></button>
             </div>
         </div>
     </div>

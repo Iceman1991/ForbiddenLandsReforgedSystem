@@ -4380,6 +4380,156 @@
                     default: "transfer"
                 }).render(true);
             }),
+
+
+            html.find(".currency-transfer").click(async ev => {
+                let currentActorId = this.actor.id;  // ID des aktuellen Actors
+            
+                // Den Ordner "Spieler" finden
+                let playerFolder = game.folders.find(folder => folder.name === "Spieler" && folder.type === "Actor");
+                // Den Ordner "Strongholds" finden
+                let strongholdsFolder = game.folders.find(folder => folder.name === "Strongholds" && folder.type === "Actor");
+            
+                // Actors in den Ordnern "Spieler" und "Strongholds" filtern
+                let playerActors = [];
+                if (playerFolder) {
+                    playerActors = game.actors.contents.filter(actor => actor.folder?.id === playerFolder.id && actor.id !== currentActorId);
+                }
+            
+                let strongholdActors = [];
+                if (strongholdsFolder) {
+                    strongholdActors = game.actors.contents.filter(actor => actor.folder?.id === strongholdsFolder.id);
+                }
+            
+                // Gamemaster finden
+                let gmUser = game.users.find(u => u.isGM);
+            
+                // Erstellen der Optionen für das Dropdown mit einem Trennstrich und dem Gamemaster
+                let playerOptions = playerActors.map(actor => `<option value="${actor.id}">${actor.name}</option>`).join("");
+                let strongholdOptions = strongholdActors.map(actor => `<option value="${actor.id}">${actor.name}</option>`).join("");
+                let gmOption = gmUser ? `<option value="gm">Gamemaster</option>` : "";
+            
+                let options = `
+                    ${playerOptions}
+                    <option disabled>──────────</option>
+                    ${strongholdOptions}
+                    <option disabled>──────────</option>
+                    ${gmOption}
+                `;
+            
+                // Ein HTML-Formular für die Währungsübertragung erstellen
+                let content = `
+                    <form>
+                        <div class="form-group">
+                            <label>Transfer Currency to:</label>
+                            <select id="actor-select">${options}</select>
+                        </div>
+                        <div class="form-group">
+                            <label>Gold:</label>
+                            <input type="number" id="gold-input" name="gold" min="0" max="${this.actor.system.currency.gold.value}" value="0">
+                        </div>
+                        <div class="form-group">
+                            <label>Silver:</label>
+                            <input type="number" id="silver-input" name="silver" min="0" max="${this.actor.system.currency.silver.value}" value="0">
+                        </div>
+                        <div class="form-group">
+                            <label>Copper:</label>
+                            <input type="number" id="copper-input" name="copper" min="0" max="${this.actor.system.currency.copper.value}" value="0">
+                        </div>
+                    </form>
+                `;
+            
+                // Den Dialog anzeigen
+                new Dialog({
+                    title: "Transfer Currency",
+                    content: content,
+                    buttons: {
+                        transfer: {
+                            icon: '<i class="fas fa-exchange-alt"></i>',
+                            label: "Transfer",
+                            callback: async html => {
+                                // Den ausgewählten Actor ermitteln
+                                let actorId = html.find("#actor-select").val();
+                                let goldTransfer = parseInt(html.find("#gold-input").val(), 10);
+                                let silverTransfer = parseInt(html.find("#silver-input").val(), 10);
+                                let copperTransfer = parseInt(html.find("#copper-input").val(), 10);
+            
+                                // Überprüfen, ob die übertragene Menge gültig ist
+                                if (goldTransfer > this.actor.system.currency.gold.value || silverTransfer > this.actor.system.currency.silver.value || copperTransfer > this.actor.system.currency.copper.value) {
+                                    ui.notifications.error("Die übertragene Menge darf nicht größer sein als die vorhandene Menge.");
+                                    return;
+                                }
+            
+                                if (actorId === "gm") {
+                                    // Transfer an den Gamemaster: Währungen einfach abziehen, ohne sie einem Actor gutzuschreiben
+                                    await this.actor.update({
+                                        "system.currency.gold.value": this.actor.system.currency.gold.value - goldTransfer,
+                                        "system.currency.silver.value": this.actor.system.currency.silver.value - silverTransfer,
+                                        "system.currency.copper.value": this.actor.system.currency.copper.value - copperTransfer
+                                    });
+            
+                                    // Chatnachricht für den Transfer an den Gamemaster
+                                    let chatMessage = `
+                                        <div style="text-align: center;">
+                                            <i class="fa-solid fa-right-left" style="font-size: 42px; line-height: 42px; display: inline-block; margin-bottom: 10px"></i>
+                                        </div>
+                                        <div style="text-align: center;">
+                                            ${goldTransfer} Gold, ${silverTransfer} Silver, and ${copperTransfer} Copper have been transferred from ${this.actor.name} to the Gamemaster.
+                                        </div>
+                                    `;
+            
+                                    ChatMessage.create({
+                                        user: game.user.id,
+                                        speaker: ChatMessage.getSpeaker({ actor: this.actor }),
+                                        content: chatMessage
+                                    });
+            
+                                } else {
+                                    // Transfer an einen anderen Actor
+                                    let targetActor = game.actors.get(actorId);
+            
+                                    if (targetActor) {
+                                        // Währungen beim Ziel-Schauspieler hinzufügen
+                                        await targetActor.update({
+                                            "system.currency.gold.value": targetActor.system.currency.gold.value + goldTransfer,
+                                            "system.currency.silver.value": targetActor.system.currency.silver.value + silverTransfer,
+                                            "system.currency.copper.value": targetActor.system.currency.copper.value + copperTransfer
+                                        });
+            
+                                        // Währungen beim aktuellen Schauspieler abziehen
+                                        await this.actor.update({
+                                            "system.currency.gold.value": this.actor.system.currency.gold.value - goldTransfer,
+                                            "system.currency.silver.value": this.actor.system.currency.silver.value - silverTransfer,
+                                            "system.currency.copper.value": this.actor.system.currency.copper.value - copperTransfer
+                                        });
+            
+                                        // Chatnachricht für den Transfer an den Ziel-Schauspieler
+                                        let chatMessage = `
+                                            <div style="text-align: center;">
+                                                <i class="fa-solid fa-right-left" style="font-size: 42px; line-height: 42px; display: inline-block; margin-bottom: 10px"></i>
+                                            </div>
+                                            <div style="text-align: center;">
+                                                ${goldTransfer} Gold, ${silverTransfer} Silver, and ${copperTransfer} Copper have been transferred from ${this.actor.name} to ${targetActor.name}.
+                                            </div>
+                                        `;
+            
+                                        ChatMessage.create({
+                                            user: game.user.id,
+                                            speaker: ChatMessage.getSpeaker({ actor: this.actor }),
+                                            content: chatMessage
+                                        });
+                                    }
+                                }
+                            }
+                        },
+                        cancel: {
+                            icon: '<i class="fas fa-times"></i>',
+                            label: "Cancel"
+                        }
+                    },
+                    default: "transfer"
+                }).render(true);
+            }),
             
                   
             
@@ -4601,6 +4751,14 @@
         }
         rollSpell(spellId) {
             if (!this.actor.canAct) throw this.broken();
+
+            if (this.actor.willpower.value === 0) {
+                ui.notifications.warn("Zauber kann nicht gewirkt werden, da kein Willenskraftwert mehr übrig ist.");
+                return; // Funktion wird abgebrochen, wenn der Wert 0 ist
+            }
+        
+
+
             if (!this.actor.willpower.value && !this.actorProperties.subtype?.type === "npc") throw ui.notifications.warn("WARNING.NO_WILLPOWER", {
                 localize: !0
             });
@@ -4791,24 +4949,25 @@
 
         async updateCurrency(ev, isInput = false) {
             if (isInput) {
-                // If change comes from input fields
+                // Wenn die Änderung aus Eingabefeldern kommt
                 let fieldName = ev.target.name;
                 let newValue = parseInt(ev.target.value);
                 let oldValue = getProperty(this.actor.data, fieldName);
-
+        
                 await this.actor.update({
                     [fieldName]: newValue
                 });
-
-                // Send secret message to GM
+        
+                // Blinde Nachricht an den GM senden
                 let currencyType = fieldName.split('.')[2];
-                let messageContent = `${this.actor.name} hat die Währung geändert: ${currencyType.charAt(0).toUpperCase() + currencyType.slice(1)} von ${oldValue} auf ${newValue}`;
+                let messageContent = `<span style="color: red;">${this.actor.name} hat die Währung geändert: ${currencyType.charAt(0).toUpperCase() + currencyType.slice(1)} von ${oldValue} auf ${newValue}</span>`;
                 ChatMessage.create({
                     content: messageContent,
-                    whisper: ChatMessage.getWhisperRecipients("GM")
+                    whisper: ChatMessage.getWhisperRecipients("GM"),
+                    blind: true  // Macht die Nachricht blind
                 });
             } else {
-                // If change comes from buttons
+                // Wenn die Änderung durch Buttons kommt
                 let currency = $(ev.currentTarget).data("currency");
                 let operator = $(ev.currentTarget).data("operator");
                 let modifier = ev.type === "contextmenu" ? 5 : 1;
@@ -4828,6 +4987,7 @@
                 });
             }
         }
+        
 
         async rollConsumable(identifier) {
             let consumable = this.actor.consumables[identifier];
