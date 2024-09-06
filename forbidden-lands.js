@@ -6288,7 +6288,7 @@ function handleItemReward(actor, itemKey, quantity, prefix = "") {
     } else {
         let newItemData = itemData.toObject();
         newItemData.name = itemName;
-        newItemData.data.quantity = quantity;
+        newItemData.system.quantity = quantity;
 
         if (prefix === "Project") {
             newItemData.system.weight = "tiny";
@@ -6741,14 +6741,19 @@ function handleItemReward(actor, itemKey, quantity, prefix = "") {
         let lastMessages = game.messages.contents.slice(-5);
         let tableResultsMessage = null;
         let difficulty = 0;
+
+        console.log(lastMessages)
     
         for (let message of lastMessages.reverse()) {
-            let messageContent = $(message.data.content);
+            let messageContent = $(message.content);
+            console.log(messageContent)
             if (messageContent.find('.table-results').length > 0) {
                 tableResultsMessage = messageContent;
                 break;
             }
         }
+
+        
     
         if (tableResultsMessage) {
             let animal = null;
