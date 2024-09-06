@@ -1774,7 +1774,7 @@
         }
         static async decreaseConsumable(messageId, number) {
             let {
-                data: {
+                system: {
                     speaker
                 },
                 roll: {
@@ -1998,7 +1998,7 @@
             ["gmroll", "blindroll"].includes(chatData.rollMode) ? chatData.whisper = ChatMessage.getWhisperRecipients("GM") : chatData.rollMode === "selfroll" && (chatData.whisper = [game.user]);
             let message = await ChatMessage.create(chatData);
             if (itemData.isCriticalInjury) {
-                let content = $(message.data.content),
+                let content = $(message.system.content),
                     limit = content.find("[data-type='limit']").text().trim(),
                     healingTime = content.find("[data-type='healtime']").text().trim();
                 itemData.system.limit = limit, itemData.system.healingTime = healingTime
@@ -8791,22 +8791,61 @@ async function showConsumablesInfo() {
 
 
 
-
-
 Hooks.on('getSceneControlButtons', controls => {
     // Suchen der Main Controls (meist die ersten Controls)
     let mainControls = controls.find(control => control.name === "token");
-    
+
     if (mainControls) {
       // Neue Schaltfläche hinzufügen
       mainControls.tools.push({
-        name: "custom-button",
-        title: "Custom Button",
-        icon: "fas fa-hand-sparkles", // Font Awesome Icon
+        name: "x-card-button",
+        title: "X Card",
+        icon: "fa-solid fa-hand", // Font Awesome Icon
         button: true,
-        onClick: () => console.log("Custom button clicked!"),
+        onClick: () => {
+          // Überprüfen, ob das Overlay bereits existiert
+          let overlay = document.getElementById("blackout-overlay");
+          if (!overlay) {
+            // Erstellen des Overlay-Elements
+            overlay = document.createElement("div");
+            overlay.id = "blackout-overlay";
+            overlay.style.position = "fixed";
+            overlay.style.top = "0";
+            overlay.style.left = "0";
+            overlay.style.width = "100vw";
+            overlay.style.height = "100vh";
+            overlay.style.backgroundColor = "black";
+            overlay.style.display = "flex";
+            overlay.style.flexDirection = "column";
+            overlay.style.justifyContent = "center";
+            overlay.style.alignItems = "center";
+            overlay.style.zIndex = "9999"; // Hoher Z-Index, um über allem zu liegen
+
+            // Font Awesome Icon Hand hinzufügen
+            const bigHand = document.createElement("i");
+            bigHand.className = "fa-solid fa-x";
+            bigHand.style.fontSize = "10rem"; // Größe des Icons
+            bigHand.style.color = "white";
+            bigHand.style.marginBottom = "20px"; // Abstand zu eventuell anderen Inhalten
+
+            // Das Hand-Icon dem Overlay hinzufügen
+            overlay.appendChild(bigHand);
+
+            // Overlay zum Body hinzufügen
+            document.body.appendChild(overlay);
+
+            // Nach 5 Sekunden das Entfernen des Overlays durch Klick ermöglichen
+            setTimeout(() => {
+              overlay.addEventListener('click', () => {
+                overlay.remove();
+              });
+            }, 5000); // 5 Sekunden Verzögerung
+          } else {
+            // Wenn das Overlay existiert, wird es entfernt
+            overlay.remove();
+          }
+        },
         visible: true
       });
     }
-  });
-  
+});
