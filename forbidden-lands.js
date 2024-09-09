@@ -2103,7 +2103,50 @@
                     }
             }
             return fn(results, table)
-        }, moldData = (data, type) => (CONFIG.fbl.adventureSites?.transformers?.[type] ?? ((d, _2) => d))(data, ALL_TABLES), init = async (path, adventureSite) => {
+        }, moldData = (data, type) => (CONFIG.fbl.adventureSites?.transformers?.[type] ?? ((d, _2) => d))(data, ALL_TABLES), adventureSiteCreateDialog = async () => {
+            let titleCase = string => string.replace(/_/g, " ").replace(/\b\w/g, char => char.toUpperCase()),
+                types = Object.entries(CONFIG.fbl.adventureSites.types),
+                type = await Dialog.wait({
+                    title: localizeString("ADVENTURE_SITE.CREATE_TITLE"),
+                    content: `<form style="margin-block:12px;">
+								<p>${localizeString("ADVENTURE_SITE.CREATE_DESCRIPTION")}</p>
+								<div class="form-group">
+										<div class="form-fields">
+										<label>${localizeString("Type")}</label>
+												<select name="type">
+														${types.map(([key,value])=>`<option value="${value}:${key}">${titleCase(key)}</option>`)}
+												</select>
+										</div>
+								</div>
+						</form>`,
+                    buttons: {
+                        ok: {
+                            icon: '<i class="fas fa-check"></i>',
+                            label: `${localizeString("Create")}`,
+                            callback: jqhtml => jqhtml.find("form")[0].type.value
+                        }
+                    }
+                }),
+                [path, adventureSite] = type.split(":"),
+                content = await CONFIG.fbl.adventureSites.generate(path, adventureSite);
+            (await JournalEntry.create({
+                name: `${localizeString("ADVENTURE_SITE.LABEL")}: ${titleCase(adventureSite)}`,
+                pages: [{
+                    name: titleCase(adventureSite),
+                    text: {
+                        content: `<div class="adventure-site">${content}</div>`
+                    },
+                    title: {
+                        show: !1
+                    }
+                }],
+                flags: {
+                    "forbidden-lands": {
+                        adventureSiteType: adventureSite
+                    }
+                }
+            })).sheet.render(!0)
+        }, init = async (path, adventureSite) => {
             if (!Object.keys(CONFIG.fbl.adventureSites.types).includes(adventureSite.replace("_rooms", ""))) return "";
             ALL_TABLES = await getTables(path, adventureSite);
             let data = getRolledData(adventureSite);
@@ -3240,6 +3283,33 @@
             section.prepend(button).on("click", ev => {
                 ev.preventDefault(), new Changelog().render(!0)
             })
+        });
+        for (let hook of ["renderSidebarTab", "changeSidebarTab"]) Hooks.on(hook, app => {
+            if (!(app.tabName === "journal" && Object.keys(CONFIG.fbl.adventureSites.types).length && !app.element.find("#create-adventure-site").length)) return;
+            let adventureSiteButton = $('<button id="create-adventure-site"><i class="fas fa-castle"></i> Create Adventure Site</button>');
+            adventureSiteButton.on("click", () => {
+                adventureSiteCreateDialog()
+            }), app.element.find(".header-actions").append(adventureSiteButton)
+        });
+        Hooks.on("renderJournalSheet", (app, html) => {
+            let type = app.object.getFlag("forbidden-lands", "adventureSiteType");
+            if (!["dungeon", "ice_cave", "elven_ruin"].includes(type)) return;
+            let button = $(`<button type="button" class="create" data-action="add-room"><i class="fas fa-plus-circle"></i> ${localizeString("ADVENTURE_SITE.ADD_ROOM")}</button>`);
+            button.on("click", async () => {
+                let path = CONFIG.fbl.adventureSites.types[type],
+                    room = await CONFIG.fbl.adventureSites?.generate(path, `${type}_rooms`),
+                    pageName = $(room).find("h4, strong")?.first().text().replace(/[^\p{L}]+/u, " ").trim();
+                await app.object.createEmbeddedDocuments("JournalEntryPage", [{
+                    name: pageName,
+                    title: {
+                        level: 2,
+                        show: !1
+                    },
+                    text: {
+                        content: `<div class="adventure-site">${room}</div>`
+                    }
+                }])
+            }), html.find('[data-action="createPage"]').after(button)
         })
     }
     init_define_GLOBALPATHS();
