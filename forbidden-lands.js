@@ -200,12 +200,17 @@
                     }
                 }
             };
+
+           
     
             // Remove the "sleepy" condition if "sleep" or "inn" is chosen
             if (option === "sleep" || option === "inn") {
-                this.update({ "system.condition.sleepy.value": false });
-    
-                // Heal critical injuries
+                this.conditions?.sleepy.value && this.toggleCondition("sleepy"), this.update({
+                    system: data
+                });
+                let sleepyIndex = activeConditions.map(([key, _2]) => key).indexOf("sleepy"),
+                    wasSleepy = sleepyIndex > -1;
+                wasSleepy && activeConditions.splice(sleepyIndex, 1);
             }
     
             if ((option === "sleep" || option === "inn") && this.willpower && this.attributesAreMaxed()) {
