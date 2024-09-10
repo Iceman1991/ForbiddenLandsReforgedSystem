@@ -5124,7 +5124,7 @@
                 // Wenn die Änderung aus Eingabefeldern kommt
                 let fieldName = ev.target.name;
                 let newValue = parseInt(ev.target.value);
-                let oldValue = getProperty(this.actor.data, fieldName);
+                let oldValue = getProperty(this.actor.system, fieldName);
         
                 await this.actor.update({
                     [fieldName]: newValue
@@ -5140,8 +5140,8 @@
                 });
             } else {
                 // Wenn die Änderung durch Buttons kommt
-                let currency = $(ev.currentTarget).data("currency");
-                let operator = $(ev.currentTarget).data("operator");
+                let currency = $(ev.currentTarget).system("currency");
+                let operator = $(ev.currentTarget).system("operator");
                 let modifier = ev.type === "contextmenu" ? 5 : 1;
                 let coins = [this.actor.actorProperties.currency.gold.value, this.actor.actorProperties.currency.silver.value, this.actor.actorProperties.currency.copper.value];
                 let i = {
@@ -5642,7 +5642,7 @@
             // Wenn die Änderung aus Eingabefeldern kommt
             let fieldName = ev.target.name;
             let newValue = parseInt(ev.target.value);
-            let oldValue = getProperty(this.actor.data, fieldName);
+            let oldValue = getProperty(this.actor.system, fieldName);
     
             await this.actor.update({
                 [fieldName]: newValue
@@ -5657,8 +5657,8 @@
             });
         } else {
             // Wenn die Änderung durch Buttons kommt
-            let currency = $(ev.currentTarget).data("currency");
-            let operator = $(ev.currentTarget).data("operator");
+            let currency = $(ev.currentTarget).system("currency");
+            let operator = $(ev.currentTarget).system("operator");
             let modifier = ev.type === "contextmenu" ? 5 : 1;
             let coins = [this.actor.system.currency.gold.value, this.actor.system.currency.silver.value, this.actor.system.currency.copper.value];
             let i = { gold: 0, silver: 1, copper: 2 }[currency];
