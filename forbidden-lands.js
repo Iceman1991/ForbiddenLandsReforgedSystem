@@ -1774,18 +1774,16 @@
         }
         static async decreaseConsumable(messageId, number) {
             let {
-                system: {
-                    speaker
-                },
-                roll: {
+                speaker,
+                rolls: [{
                     options: {
                         consumable
                     }
-                }
+                }]
             } = game.messages.get(messageId);
             if (speaker = this.getSpeaker(speaker), !speaker) return;
             let currentValue = speaker?.consumables[consumable]?.value,
-                newValue = Math.max(currentValue - number, 0);
+            newValue = Math.max(currentValue - number, 0);
             return await speaker.update({
                 [`system.consumable.${consumable}.value`]: newValue
             })
