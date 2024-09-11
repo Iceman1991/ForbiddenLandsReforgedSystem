@@ -5297,7 +5297,7 @@
         _getHeaderButtons() {
             let buttons = super._getHeaderButtons();
             return this.actor.isOwner && (buttons = [{
-                    label: game.i18n.localize("SHEET.HEADER.REST"),
+                    label: "",
                     class: "rest-up",
                     icon: "fas fa-bed",
                     onclick: () => this.actor.rest()
@@ -7659,7 +7659,7 @@ function openRationDistributionDialog(rationsCooked, folderSpieler) {
         // Stelle sicher, dass der Button nur einmal hinzugefügt wird
         if (!html.closest('.window-app').find('.manage-pin').length) {
             // Button für PIN-Verwaltung hinzufügen
-            const managePinButton = `<a class="header-button control manage-pin" title="PIN verwalten"><i class="fas fa-lock"></i> PIN verwalten</a>`;
+            const managePinButton = `<a class="header-button control manage-pin" title="PIN verwalten"><i class="fas fa-lock"></i></a>`;
             html.closest('.window-app').find('.window-title').after(managePinButton);
         }
     
