@@ -8585,6 +8585,40 @@ Hooks.on('getSceneControlButtons', controls => {
     let mainControls = controls.find(control => control.name === "token");
 
     if (mainControls) {
+        // Neue Schaltfläche hinzufügen
+        mainControls.tools.push({
+            name: "daytime-button",
+            title: "Daytime",
+            icon: "fa-solid fa-sun", // Font Awesome Icon
+            button: true,
+            onClick: () => {
+                // Überprüfen, ob das Overlay bereits existiert
+                let daytimetracker = document.getElementById("time-tracker");
+                
+                if (daytimetracker) {
+                    // Sichtbarkeit toggeln
+                    if (daytimetracker.style.display === "none") {
+                        daytimetracker.style.display = "block";
+                    } else {
+                        daytimetracker.style.display = "none";
+                    }
+                } else {
+                    console.error("Das Element #time-tracker wurde nicht gefunden.");
+                }
+            },
+            visible: true
+        });
+    }
+});
+
+
+
+
+Hooks.on('getSceneControlButtons', controls => {
+    // Suchen der Main Controls (meist die ersten Controls)
+    let mainControls = controls.find(control => control.name === "token");
+
+    if (mainControls) {
       // Neue Schaltfläche hinzufügen
       mainControls.tools.push({
         name: "x-card-button",
@@ -8617,18 +8651,33 @@ Hooks.on('getSceneControlButtons', controls => {
             bigHand.style.color = "white";
             bigHand.style.marginBottom = "20px"; // Abstand zu eventuell anderen Inhalten
 
-            // Das Hand-Icon dem Overlay hinzufügen
+            // Countdown-Text hinzufügen
+            const countdownText = document.createElement("div");
+            countdownText.style.fontSize = "2rem";
+            countdownText.style.color = "white";
+            countdownText.id = "countdown";
+            countdownText.textContent = "5"; // Start mit 5 Sekunden
+
+            // Das Hand-Icon und den Countdown dem Overlay hinzufügen
             overlay.appendChild(bigHand);
+            overlay.appendChild(countdownText);
 
             // Overlay zum Body hinzufügen
             document.body.appendChild(overlay);
 
-            // Nach 5 Sekunden das Entfernen des Overlays durch Klick ermöglichen
-            setTimeout(() => {
-              overlay.addEventListener('click', () => {
-                overlay.remove();
-              });
-            }, 5000); // 5 Sekunden Verzögerung
+            // Countdown Logik
+            let countdown = 5;
+            const countdownInterval = setInterval(() => {
+              countdown--;
+              countdownText.textContent = countdown;
+              if (countdown <= 0) {
+                clearInterval(countdownInterval);
+                overlay.remove(); // Entfernt das Overlay automatisch nach 5 Sekunden
+              }
+            }, 1000); // Countdown tickt jede Sekunde
+
+            // Overlay für alle Benutzer synchronisieren
+            game.socket.emit('module.yourModuleName', { action: 'showOverlay' });
           } else {
             // Wenn das Overlay existiert, wird es entfernt
             overlay.remove();
@@ -8637,4 +8686,56 @@ Hooks.on('getSceneControlButtons', controls => {
         visible: true
       });
     }
+});
+
+// Auf dem Socket-Event hören, um das Overlay für alle Benutzer anzuzeigen
+Hooks.once('ready', () => {
+  game.socket.on('module.yourModuleName', data => {
+    if (data.action === 'showOverlay') {
+      let overlay = document.getElementById("blackout-overlay");
+      if (!overlay) {
+        // Der gleiche Overlay-Code wie oben
+        overlay = document.createElement("div");
+        overlay.id = "blackout-overlay";
+        overlay.style.position = "fixed";
+        overlay.style.top = "0";
+        overlay.style.left = "0";
+        overlay.style.width = "100vw";
+        overlay.style.height = "100vh";
+        overlay.style.backgroundColor = "black";
+        overlay.style.display = "flex";
+        overlay.style.flexDirection = "column";
+        overlay.style.justifyContent = "center";
+        overlay.style.alignItems = "center";
+        overlay.style.zIndex = "9999";
+
+        const bigHand = document.createElement("i");
+        bigHand.className = "fa-solid fa-x";
+        bigHand.style.fontSize = "10rem";
+        bigHand.style.color = "white";
+        bigHand.style.marginBottom = "20px";
+
+        const countdownText = document.createElement("div");
+        countdownText.style.fontSize = "2rem";
+        countdownText.style.color = "white";
+        countdownText.id = "countdown";
+        countdownText.textContent = "5";
+
+        overlay.appendChild(bigHand);
+        overlay.appendChild(countdownText);
+
+        document.body.appendChild(overlay);
+
+        let countdown = 5;
+        const countdownInterval = setInterval(() => {
+          countdown--;
+          countdownText.textContent = countdown;
+          if (countdown <= 0) {
+            clearInterval(countdownInterval);
+            overlay.remove();
+          }
+        }, 1000);
+      }
+    }
+  });
 });
