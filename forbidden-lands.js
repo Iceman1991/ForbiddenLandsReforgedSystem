@@ -4256,7 +4256,7 @@
                     quantityInput = `
                         <div class="form-group">
                             <label>Quantity to Transfer:</label>
-                            <input type="number" id="quantity-input" name="quantity" min="1" max="${item.data.data.quantity}" value="${item.data.data.quantity}">
+                            <input type="number" id="quantity-input" name="quantity" min="1" max="${item.system.quantity}" value="${item.system.quantity}">
                         </div>
                     `;
                 }
@@ -4287,21 +4287,21 @@
             
                                 if (targetActor) {
                                     // Menge ermitteln, falls das Item ein "quantity"-Attribut hat
-                                    let transferQuantity = item.data.data.quantity;
-                                    if (item.data.data.quantity && item.data.data.quantity > 1 && html.find("#quantity-input").length) {
+                                    let transferQuantity = item.system.quantity;
+                                    if (item.system.quantity && item.system.quantity > 1 && html.find("#quantity-input").length) {
                                         transferQuantity = parseInt(html.find("#quantity-input").val(), 10);
                                     }
             
                                     // Überprüfen, ob die Menge gültig ist
-                                    if (transferQuantity > item.data.data.quantity) {
+                                    if (transferQuantity > item.system.quantity) {
                                         ui.notifications.error("Die transferierte Menge kann nicht größer sein als die vorhandene Menge.");
                                         return;
                                     }
             
                                     // Eine Kopie des Items erstellen
                                     let itemData = item.toObject();
-                                    if (itemData.data.quantity && transferQuantity > 1) {
-                                        itemData.data.quantity = transferQuantity;
+                                    if (itemData.system.quantity && transferQuantity > 1) {
+                                        itemData.system.quantity = transferQuantity;
                                     }
             
                                     // Prüfung nur bei rawmaterials
@@ -4313,7 +4313,7 @@
                                             // Falls ein solches Item existiert, die Quantity addieren
                                             await targetActor.updateEmbeddedDocuments("Item", [{
                                                 _id: existingItem.id,
-                                                "data.quantity": existingItem.data.data.quantity + transferQuantity
+                                                "system.quantity": existingItem.system.quantity + transferQuantity
                                             }]);
                                         } else {
                                             // Andernfalls das Item als neues Item hinzufügen
@@ -4325,10 +4325,10 @@
                                     }
             
                                     // Das Item aus dem aktuellen Actor entfernen oder die Menge anpassen
-                                    if (!itemData.data.quantity || transferQuantity >= item.data.data.quantity) {
+                                    if (!itemData.system.quantity || transferQuantity >= item.system.quantity) {
                                         await this.actor.deleteEmbeddedDocuments("Item", [itemId]);
                                     } else {
-                                        await this.actor.updateEmbeddedDocuments("Item", [{ _id: itemId, "data.quantity": item.data.data.quantity - transferQuantity }]);
+                                        await this.actor.updateEmbeddedDocuments("Item", [{ _id: itemId, "system.quantity": item.system.quantity - transferQuantity }]);
                                     }
             
                                     // Chatnachricht senden, die den Transfer beschreibt
