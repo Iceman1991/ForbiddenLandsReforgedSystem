@@ -4252,7 +4252,7 @@
             
                 // Prüfen, ob das Item ein "quantity"-Attribut hat, das größer als 1 ist, und entsprechendes Input-Feld vorbereiten
                 let quantityInput = '';
-                if (item.data.data.quantity && item.data.data.quantity > 1) {
+                if (item.system.quantity && item.system.quantity > 1) {
                     quantityInput = `
                         <div class="form-group">
                             <label>Quantity to Transfer:</label>
