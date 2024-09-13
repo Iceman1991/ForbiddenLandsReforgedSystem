@@ -8621,128 +8621,128 @@ Hooks.on('getSceneControlButtons', controls => {
 
 
 
-Hooks.on('getSceneControlButtons', controls => {
-    // Suchen der Main Controls (meist die ersten Controls)
-    let mainControls = controls.find(control => control.name === "token");
+// Hooks.on('getSceneControlButtons', controls => {
+//     // Suchen der Main Controls (meist die ersten Controls)
+//     let mainControls = controls.find(control => control.name === "token");
 
-    if (mainControls) {
-      // Neue Schaltfläche hinzufügen
-      mainControls.tools.push({
-        name: "x-card-button",
-        title: "X Card",
-        icon: "fa-solid fa-hand", // Font Awesome Icon
-        button: true,
-        onClick: () => {
-          // Überprüfen, ob das Overlay bereits existiert
-          let overlay = document.getElementById("blackout-overlay");
-          if (!overlay) {
-            // Erstellen des Overlay-Elements
-            overlay = document.createElement("div");
-            overlay.id = "blackout-overlay";
-            overlay.style.position = "fixed";
-            overlay.style.top = "0";
-            overlay.style.left = "0";
-            overlay.style.width = "100vw";
-            overlay.style.height = "100vh";
-            overlay.style.backgroundColor = "black";
-            overlay.style.display = "flex";
-            overlay.style.flexDirection = "column";
-            overlay.style.justifyContent = "center";
-            overlay.style.alignItems = "center";
-            overlay.style.zIndex = "9999"; // Hoher Z-Index, um über allem zu liegen
+//     if (mainControls) {
+//       // Neue Schaltfläche hinzufügen
+//       mainControls.tools.push({
+//         name: "x-card-button",
+//         title: "X Card",
+//         icon: "fa-solid fa-hand", // Font Awesome Icon
+//         button: true,
+//         onClick: () => {
+//           // Überprüfen, ob das Overlay bereits existiert
+//           let overlay = document.getElementById("blackout-overlay");
+//           if (!overlay) {
+//             // Erstellen des Overlay-Elements
+//             overlay = document.createElement("div");
+//             overlay.id = "blackout-overlay";
+//             overlay.style.position = "fixed";
+//             overlay.style.top = "0";
+//             overlay.style.left = "0";
+//             overlay.style.width = "100vw";
+//             overlay.style.height = "100vh";
+//             overlay.style.backgroundColor = "black";
+//             overlay.style.display = "flex";
+//             overlay.style.flexDirection = "column";
+//             overlay.style.justifyContent = "center";
+//             overlay.style.alignItems = "center";
+//             overlay.style.zIndex = "9999"; // Hoher Z-Index, um über allem zu liegen
 
-            // Font Awesome Icon Hand hinzufügen
-            const bigHand = document.createElement("i");
-            bigHand.className = "fa-solid fa-x";
-            bigHand.style.fontSize = "10rem"; // Größe des Icons
-            bigHand.style.color = "white";
-            bigHand.style.marginBottom = "20px"; // Abstand zu eventuell anderen Inhalten
+//             // Font Awesome Icon Hand hinzufügen
+//             const bigHand = document.createElement("i");
+//             bigHand.className = "fa-solid fa-x";
+//             bigHand.style.fontSize = "10rem"; // Größe des Icons
+//             bigHand.style.color = "white";
+//             bigHand.style.marginBottom = "20px"; // Abstand zu eventuell anderen Inhalten
 
-            // Countdown-Text hinzufügen
-            const countdownText = document.createElement("div");
-            countdownText.style.fontSize = "2rem";
-            countdownText.style.color = "white";
-            countdownText.id = "countdown";
-            countdownText.textContent = "5"; // Start mit 5 Sekunden
+//             // Countdown-Text hinzufügen
+//             const countdownText = document.createElement("div");
+//             countdownText.style.fontSize = "2rem";
+//             countdownText.style.color = "white";
+//             countdownText.id = "countdown";
+//             countdownText.textContent = "5"; // Start mit 5 Sekunden
 
-            // Das Hand-Icon und den Countdown dem Overlay hinzufügen
-            overlay.appendChild(bigHand);
-            overlay.appendChild(countdownText);
+//             // Das Hand-Icon und den Countdown dem Overlay hinzufügen
+//             overlay.appendChild(bigHand);
+//             overlay.appendChild(countdownText);
 
-            // Overlay zum Body hinzufügen
-            document.body.appendChild(overlay);
+//             // Overlay zum Body hinzufügen
+//             document.body.appendChild(overlay);
 
-            // Countdown Logik
-            let countdown = 5;
-            const countdownInterval = setInterval(() => {
-              countdown--;
-              countdownText.textContent = countdown;
-              if (countdown <= 0) {
-                clearInterval(countdownInterval);
-                overlay.remove(); // Entfernt das Overlay automatisch nach 5 Sekunden
-              }
-            }, 1000); // Countdown tickt jede Sekunde
+//             // Countdown Logik
+//             let countdown = 5;
+//             const countdownInterval = setInterval(() => {
+//               countdown--;
+//               countdownText.textContent = countdown;
+//               if (countdown <= 0) {
+//                 clearInterval(countdownInterval);
+//                 overlay.remove(); // Entfernt das Overlay automatisch nach 5 Sekunden
+//               }
+//             }, 1000); // Countdown tickt jede Sekunde
 
-            // Overlay für alle Benutzer synchronisieren
-            game.socket.emit('module.yourModuleName', { action: 'showOverlay' });
-          } else {
-            // Wenn das Overlay existiert, wird es entfernt
-            overlay.remove();
-          }
-        },
-        visible: true
-      });
-    }
-});
+//             // Overlay für alle Benutzer synchronisieren
+//             game.socket.emit('module.yourModuleName', { action: 'showOverlay' });
+//           } else {
+//             // Wenn das Overlay existiert, wird es entfernt
+//             overlay.remove();
+//           }
+//         },
+//         visible: true
+//       });
+//     }
+// });
 
-// Auf dem Socket-Event hören, um das Overlay für alle Benutzer anzuzeigen
-Hooks.once('ready', () => {
-  game.socket.on('module.yourModuleName', data => {
-    if (data.action === 'showOverlay') {
-      let overlay = document.getElementById("blackout-overlay");
-      if (!overlay) {
-        // Der gleiche Overlay-Code wie oben
-        overlay = document.createElement("div");
-        overlay.id = "blackout-overlay";
-        overlay.style.position = "fixed";
-        overlay.style.top = "0";
-        overlay.style.left = "0";
-        overlay.style.width = "100vw";
-        overlay.style.height = "100vh";
-        overlay.style.backgroundColor = "black";
-        overlay.style.display = "flex";
-        overlay.style.flexDirection = "column";
-        overlay.style.justifyContent = "center";
-        overlay.style.alignItems = "center";
-        overlay.style.zIndex = "9999";
+// // Auf dem Socket-Event hören, um das Overlay für alle Benutzer anzuzeigen
+// Hooks.once('ready', () => {
+//   game.socket.on('module.yourModuleName', data => {
+//     if (data.action === 'showOverlay') {
+//       let overlay = document.getElementById("blackout-overlay");
+//       if (!overlay) {
+//         // Der gleiche Overlay-Code wie oben
+//         overlay = document.createElement("div");
+//         overlay.id = "blackout-overlay";
+//         overlay.style.position = "fixed";
+//         overlay.style.top = "0";
+//         overlay.style.left = "0";
+//         overlay.style.width = "100vw";
+//         overlay.style.height = "100vh";
+//         overlay.style.backgroundColor = "black";
+//         overlay.style.display = "flex";
+//         overlay.style.flexDirection = "column";
+//         overlay.style.justifyContent = "center";
+//         overlay.style.alignItems = "center";
+//         overlay.style.zIndex = "9999";
 
-        const bigHand = document.createElement("i");
-        bigHand.className = "fa-solid fa-x";
-        bigHand.style.fontSize = "10rem";
-        bigHand.style.color = "white";
-        bigHand.style.marginBottom = "20px";
+//         const bigHand = document.createElement("i");
+//         bigHand.className = "fa-solid fa-x";
+//         bigHand.style.fontSize = "10rem";
+//         bigHand.style.color = "white";
+//         bigHand.style.marginBottom = "20px";
 
-        const countdownText = document.createElement("div");
-        countdownText.style.fontSize = "2rem";
-        countdownText.style.color = "white";
-        countdownText.id = "countdown";
-        countdownText.textContent = "5";
+//         const countdownText = document.createElement("div");
+//         countdownText.style.fontSize = "2rem";
+//         countdownText.style.color = "white";
+//         countdownText.id = "countdown";
+//         countdownText.textContent = "5";
 
-        overlay.appendChild(bigHand);
-        overlay.appendChild(countdownText);
+//         overlay.appendChild(bigHand);
+//         overlay.appendChild(countdownText);
 
-        document.body.appendChild(overlay);
+//         document.body.appendChild(overlay);
 
-        let countdown = 5;
-        const countdownInterval = setInterval(() => {
-          countdown--;
-          countdownText.textContent = countdown;
-          if (countdown <= 0) {
-            clearInterval(countdownInterval);
-            overlay.remove();
-          }
-        }, 1000);
-      }
-    }
-  });
-});
+//         let countdown = 5;
+//         const countdownInterval = setInterval(() => {
+//           countdown--;
+//           countdownText.textContent = countdown;
+//           if (countdown <= 0) {
+//             clearInterval(countdownInterval);
+//             overlay.remove();
+//           }
+//         }, 1000);
+//       }
+//     }
+//   });
+// });
