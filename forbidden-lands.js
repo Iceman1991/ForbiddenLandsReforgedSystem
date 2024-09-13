@@ -8139,17 +8139,24 @@ async function incrementDay() {
             "system.housing": totalHousing
         });
 
-        for (let currency of ["copper", "silver", "gold"]) {
-            let currencyValue = actor.system.currency[currency]?.value || 0;
-            let cost = hirelingCosts[currency];
-            if (cost > 0) {
-                let newQuantity = Math.max(0, currencyValue - cost);
-                await actor.update({ [`system.currency.${currency}.value`]: newQuantity });
-                if (newQuantity === 0) {
-                    canPayHirelings = false;
-                }
+
+
+        if (actor.system.currency) {
+    for (let currency of ["copper", "silver", "gold"]) {
+        let currencyValue = actor.system.currency[currency]?.value || 0;
+        let cost = hirelingCosts[currency];
+
+        if (cost > 0 && currencyValue > 0) {  // Check if the actor has any value in this currency
+            let newQuantity = Math.max(0, currencyValue - cost);
+            await actor.update({ [`system.currency.${currency}.value`]: newQuantity });
+
+            if (newQuantity === 0) {
+                canPayHirelings = false;
             }
         }
+    }
+}
+
 
         if (newItems.length > 0) {
             await actor.createEmbeddedDocuments("Item", newItems);
