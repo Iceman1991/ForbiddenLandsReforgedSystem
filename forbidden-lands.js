@@ -5816,7 +5816,7 @@
             static async buildCharacterSelector(characters) {
                 let html = "",
                     actor;
-                for (let i = 0; i < characters.length; i++) actor = characters[i] instanceof Actor ? characters[i].data : game.actors.get(characters[i]).data, html += await renderTemplate("systems/forbidden-lands/templates/actor/party/components/member-component.hbs", {
+                for (let i = 0; i < characters.length; i++) actor = characters[i] instanceof Actor ? characters[i] : game.actors.get(characters[i]), html += await renderTemplate("systems/forbidden-lands/templates/actor/party/components/member-component.hbs", {
                     partyMember: actor,
                     noCharSheetLink: !0
                 });
@@ -8238,7 +8238,7 @@ async function updateSceneDarkness(targetDarkness, duration = 1000) {
     const scene = game.scenes.active;
     if (!scene) return;
 
-    const initialDarkness = scene.darkness;
+    const initialDarkness = scene.environment.darknessLevel;
     const difference = targetDarkness - initialDarkness;
     const stepTime = 5; // Interval time in ms
     const steps = duration / stepTime;
