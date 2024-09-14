@@ -4778,12 +4778,27 @@
                 monsterEncumbranceMultiplier = this.actor.type === "monster" ? data.system.isMounted ? 1 : 2 : 1,
                 modifiers = this.actor.getRollModifierOptions("carryingCapacity"),
                 weightAllowed = baseEncumbrance * monsterEncumbranceMultiplier + modifiers.reduce((acc, m) => acc + Number.parseInt(m?.value || 0), 0);
-            return data.system.encumbrance = {
+            
+            // Compute if over encumbered
+            data.system.encumbrance = {
                 value: weightCarried,
                 max: weightAllowed,
                 over: weightCarried > weightAllowed
-            }, data
+            };
+            
+            // Check if over encumbered by more than double and send a chat message
+            if (data.system.encumbrance.value > (data.system.encumbrance.max * 2)) {
+                let chatMessage = this.actor.name + " can't carry this much!";
+                ChatMessage.create({
+                    content: chatMessage,
+                    speaker: { alias: this.actor.name }
+                });
+            }
+        
+            return data;
         }
+        
+        
         broken(type) {
             let msg = type === "item" ? "WARNING.ITEM_BROKEN" : "WARNING.ACTOR_BROKEN";
             return ui.notifications.warn(msg, {
