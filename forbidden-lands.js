@@ -5158,7 +5158,7 @@
                 // Wenn die Änderung aus Eingabefeldern kommt
                 let fieldName = ev.target.name;
                 let newValue = parseInt(ev.target.value);
-                let oldValue = getProperty(this.actor.system, fieldName);
+                let oldValue = getProperty(this.actor, fieldName);
         
                 await this.actor.update({
                     [fieldName]: newValue
@@ -5377,6 +5377,10 @@
                 }]
             })
         }
+
+        
+
+
         async getData() {
             let actorData = await super.getData();
             return this.computeSkills(actorData), this.computeItems(actorData), this.computeEncumbrance(actorData), actorData
@@ -5391,7 +5395,59 @@
                     "system.isMounted": !boolean
                 })
             })
+            
+            // Monitor changes in currency buttons
+            html.find(".currency-button").on("click contextmenu", ev => {
+                this.updateCurrency(ev);
+            });
+
+            // Monitor direct input changes in currency fields
+            html.find("input[name^='system.currency']").on("change", ev => {
+                this.updateCurrency(ev, true);
+            });
         }
+
+        async updateCurrency(ev, isInput = false) {
+            if (isInput) {
+                // Wenn die Änderung aus Eingabefeldern kommt
+                let fieldName = ev.target.name;
+                let newValue = parseInt(ev.target.value);
+                let oldValue = getProperty(this.actor, fieldName);
+        
+                await this.actor.update({
+                    [fieldName]: newValue
+                });
+        
+                // Blinde Nachricht an den GM senden
+                let currencyType = fieldName.split('.')[2];
+                let messageContent = `<span style="color: red;">${this.actor.name} hat die Währung geändert: ${currencyType.charAt(0).toUpperCase() + currencyType.slice(1)} von ${oldValue} auf ${newValue}</span>`;
+                ChatMessage.create({
+                    content: messageContent,
+                    whisper: ChatMessage.getWhisperRecipients("GM"),
+                    blind: true  // Macht die Nachricht blind
+                });
+            } else {
+                // Wenn die Änderung durch Buttons kommt
+                let currency = $(ev.currentTarget).system("currency");
+                let operator = $(ev.currentTarget).system("operator");
+                let modifier = ev.type === "contextmenu" ? 5 : 1;
+                let coins = [this.actor.actorProperties.currency.gold.value, this.actor.actorProperties.currency.silver.value, this.actor.actorProperties.currency.copper.value];
+                let i = {
+                    gold: 0,
+                    silver: 1,
+                    copper: 2
+                } [currency];
+                if (operator === "plus") coins[i] += modifier;
+                else
+                    for (coins[i] -= modifier; i >= 0; --i) coins[i] < 0 && i > 0 && (coins[i - 1] -= 1, coins[i] += 10);
+                coins[0] >= 0 && await this.actor.update({
+                    "system.currency.gold.value": coins[0],
+                    "system.currency.silver.value": coins[1],
+                    "system.currency.copper.value": coins[2]
+                });
+            }
+        }
+
         async rollAttack() {
             let attacks = this.actor.itemTypes.monsterAttack,
                 roll = await new Roll(`1d${attacks.length}`).roll({
