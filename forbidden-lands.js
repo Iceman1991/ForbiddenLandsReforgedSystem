@@ -205,6 +205,9 @@
     
             // Remove the "sleepy" condition if "sleep" or "inn" is chosen
             if (option === "sleep" || option === "inn") {
+                if (option === "sleep" && this.type === "character") {
+                    setTimeout(() => this.sheet.rollConsumable("hygiene"), 500);
+                }
                 this.conditions?.sleepy.value && this.toggleCondition("sleepy"), this.update({
                     system: data
                 });

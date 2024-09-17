@@ -267,6 +267,20 @@
 				"value": 0,
 				"description": ""
 			},
+			"currency": {
+				"gold": {
+					"label": "CURRENCY.GOLD",
+					"value": 0
+				},
+				"silver": {
+					"label": "CURRENCY.SILVER",
+					"value": 0
+				},
+				"copper": {
+					"label": "CURRENCY.COPPER",
+					"value": 0
+				}
+			},
 			"isMounted": false
 		},
 		"party": {
