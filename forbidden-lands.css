@@ -5072,6 +5072,6 @@ background: linear-gradient(90deg, rgba(223,223,223,1) 0%, rgba(255,255,255,1) 5
     left: 0;
     pointer-events: none;
     z-index: calc(var(--z-index-canvas) + 1);
-    background: none
-    display: none;
+    background: none;
+	display: none;
 }
