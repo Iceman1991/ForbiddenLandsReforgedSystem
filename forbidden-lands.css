@@ -4669,15 +4669,14 @@ button:hover, button:focus {
 	border:unset
 }
 .journal-page-header h1,.journal-page-header h2,.journal-page-header h3{
-	min-height:250px;
+	
 	width:min(100%,900px);
 	margin-inline:auto;
-	padding:20px 85px 0;
+	padding:20px 10px 0;
 	display:flex;
 	align-items:center;
 	justify-content:center;
 	border:1px solid transparent;
-	border-image:url(./assets/journal-art/title-border.webp);
 	border-image-slice:50%;
 	border-image-width:100%;
 	font-size:var(--font-size-32);
