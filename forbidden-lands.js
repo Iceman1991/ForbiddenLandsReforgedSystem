@@ -4765,41 +4765,64 @@
                 }])
             }))
         }
-        computeEncumbrance(data) {
-            let weightCarried = 0;
-            for (let item of Object.values(data.items)) weightCarried += this.computeItemEncumbrance(item);
-            if (this.actor.type === "character") {
-                for (let consumable of Object.values(data.system.consumable)) {
-                    if (consumable.label !== 'CONSUMABLE.HYGIENE') {
-                        weightCarried += consumable.value * 0.25;
-                    }
-                }
-                let coinsCarried = Number.parseInt(data.system.currency.gold.value) + Number.parseInt(data.system.currency.silver.value) + Number.parseInt(data.system.currency.copper.value);
-                weightCarried = (weightCarried + Math.floor(coinsCarried / 100) * 0.5).toFixed(2);
-            }
-            let baseEncumbrance = data.system.attribute.strength.max * 2,
-                monsterEncumbranceMultiplier = this.actor.type === "monster" ? data.system.isMounted ? 1 : 2 : 1,
-                modifiers = this.actor.getRollModifierOptions("carryingCapacity"),
-                weightAllowed = baseEncumbrance * monsterEncumbranceMultiplier + modifiers.reduce((acc, m) => acc + Number.parseInt(m?.value || 0), 0);
-            
-            // Compute if over encumbered
-            data.system.encumbrance = {
-                value: weightCarried,
-                max: weightAllowed,
-                over: weightCarried > weightAllowed
-            };
-            
-            // Check if over encumbered by more than double and send a chat message
-            if (data.system.encumbrance.value > (data.system.encumbrance.max * 2)) {
-                let chatMessage = this.actor.name + " can't carry this much!";
-                ChatMessage.create({
-                    content: chatMessage,
-                    speaker: { alias: this.actor.name }
-                });
-            }
         
+        
+          
+          // Angepasste computeEncumbrance mit Settings-Werten
+          computeEncumbrance(data) {
+            let weightCarried = 0;
+            // Gewicht aller Items
+            for (let item of Object.values(data.items)) {
+              weightCarried += this.computeItemEncumbrance(item);
+            }
+          
+            if (this.actor.type === "character") {
+              // Lese die Gewichte aus den Settings
+              const weights = {
+                food: game.settings.get('forbidden-lands', 'weightFood'),
+                water: game.settings.get('forbidden-lands', 'weightWater'),
+                torches: game.settings.get('forbidden-lands', 'weightTorches'),
+                arrows: game.settings.get('forbidden-lands', 'weightArrows'),
+                hygiene: game.settings.get('forbidden-lands', 'weightHygiene')
+              };
+              // Gewicht der Consumables
+              for (const [key, consumable] of Object.entries(data.system.consumable)) {
+                const perUnit = weights[key] !== undefined ? weights[key] : 0.25;
+                weightCarried += consumable.value * perUnit;
+              }
+              // Gewicht der Münzen
+              const coinsCarried = Number.parseInt(data.system.currency.gold.value) +
+                                   Number.parseInt(data.system.currency.silver.value) +
+                                   Number.parseInt(data.system.currency.copper.value);
+              weightCarried = (weightCarried + Math.floor(coinsCarried / 100) * 0.5).toFixed(2);
+            }
+          
+            // Berechne maximale Traglast
+            const baseEncumbrance = data.system.attribute.strength.max * 2;
+            const monsterEncumbranceMultiplier = this.actor.type === "monster"
+              ? (data.system.isMounted ? 1 : 2) : 1;
+            const modifiers = this.actor.getRollModifierOptions("carryingCapacity");
+            const weightAllowed = baseEncumbrance * monsterEncumbranceMultiplier
+              + modifiers.reduce((acc, m) => acc + Number.parseInt(m?.value || 0), 0);
+          
+            // Setze Encumbrance-Daten
+            data.system.encumbrance = {
+              value: weightCarried,
+              max: weightAllowed,
+              over: weightCarried > weightAllowed
+            };
+          
+            // Warnung bei extremem Überladen
+            if (data.system.encumbrance.value > (data.system.encumbrance.max * 2)) {
+              ChatMessage.create({
+                content: `${this.actor.name} can't carry this much!`,
+                speaker: { alias: this.actor.name }
+              });
+            }
+          
             return data;
-        }
+          }
+          
         
         
         broken(type) {
@@ -4959,7 +4982,7 @@
             if (!this.actor.canAct) throw this.broken();
 
             if (this.actor.willpower.value === 0) {
-                ui.notifications.warn("Zauber kann nicht gewirkt werden, da kein Willenskraftwert mehr übrig ist.");
+                ui.notifications.warn("Spell cannot be cast as there is no willpower value left.");
                 return; // Funktion wird abgebrochen, wenn der Wert 0 ist
             }
         
@@ -7196,9 +7219,15 @@ function openRationDistributionDialog(rationsCooked, folderSpieler) {
                 } else {
                   await character.deleteEmbeddedDocuments("Item", [wood.id]);
                 }
+                // Chatnachricht, dass Wood verbraucht wurde
+                ChatMessage.create({
+                  speaker: ChatMessage.getSpeaker({ actor: character }),
+                  content: `${character.name} used 1 Wood to try to make a camp.`
+                });
               }
             }]
           },
+          
           
         rest: {
             key: "rest",
@@ -8009,6 +8038,47 @@ Hooks.once('init', () => {
         type: Boolean,
         default: true
     });
+
+    game.settings.register('forbidden-lands', 'weightFood', {
+        name: 'Weight per Food unit',
+        hint: 'The weight of a single unit of Food.',
+        scope: 'world',
+        config: true,
+        type: Number,
+        default: 0.5
+      });
+      game.settings.register('forbidden-lands', 'weightWater', {
+        name: 'Weight per Water unit',
+        hint: 'The weight of a single unit of Water.',
+        scope: 'world',
+        config: true,
+        type: Number,
+        default: 0.75
+      });
+      game.settings.register('forbidden-lands', 'weightTorches', {
+        name: 'Weight per Torch',
+        hint: 'The weight of a single Torch.',
+        scope: 'world',
+        config: true,
+        type: Number,
+        default: 0.1
+      });
+      game.settings.register('forbidden-lands', 'weightArrows', {
+        name: 'Weight per Arrow',
+        hint: 'The weight of a single Arrow.',
+        scope: 'world',
+        config: true,
+        type: Number,
+        default: 0.05
+      });
+      game.settings.register('forbidden-lands', 'weightHygiene', {
+        name: 'Weight per Hygiene',
+        hint: 'The weight of the Hygiene consumable (often zero).',
+        scope: 'world',
+        config: true,
+        type: Number,
+        default: 0
+      });
 });
 
 async function updateTimeDisplay() {
