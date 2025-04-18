@@ -205,9 +205,9 @@
     
             // Remove the "sleepy" condition if "sleep" or "inn" is chosen
             if (option === "sleep" || option === "inn") {
-                if (option === "sleep" && this.type === "character") {
-                    setTimeout(() => this.sheet.rollConsumable("hygiene"), 500);
-                }
+               // if (option === "sleep" && this.type === "character") {
+                //    setTimeout(() => this.sheet.rollConsumable("hygiene"), 500);
+               // }
                 this.conditions?.sleepy.value && this.toggleCondition("sleepy"), this.update({
                     system: data
                 });
@@ -7115,7 +7115,6 @@ function openRationDistributionDialog(rationsCooked, folderSpieler) {
     
     
     
-    
     var TravelActionsConfig = {
         hike: {
             key: "hike",
@@ -7170,13 +7169,37 @@ function openRationDistributionDialog(rationsCooked, folderSpieler) {
             journalEntryName: "Make Camp",
             name: "FLPS.TRAVEL.CAMP",
             buttons: [{
-                name: "FLPS.TRAVEL_ROLL.MAKE_CAMP",
-                class: "travel-make-camp",
-                handler: party => {
-                    handleTravelAction(party.actorProperties.travel.camp, "travel-make-camp")
+              name: "FLPS.TRAVEL_ROLL.MAKE_CAMP",
+              class: "travel-make-camp",
+              handler: async party => {
+                const assigned = party.actorProperties.travel.camp;
+                
+                // Ersten Charakter holen
+                const character = game.actors.get(assigned[0]);
+                // Im Inventar nach "Wood" suchen
+                const wood = character.items.find(i =>
+                  i.type === "rawMaterial" && i.name.toLowerCase() === "wood"
+                );
+                const qty = wood?.system?.quantity || 0;
+                if (qty < 1) {
+                  return ui.notifications.warn("You need Wood to make a camp.");
                 }
+                // Würfelaktion ausführen
+                handleTravelAction(assigned, "travel-make-camp");
+                // Jetzt 1 Wood abziehen
+                const newQty = qty - 1;
+                if (newQty > 0) {
+                  await character.updateEmbeddedDocuments("Item", [{
+                    _id: wood.id,
+                    "system.quantity": newQty
+                  }]);
+                } else {
+                  await character.deleteEmbeddedDocuments("Item", [wood.id]);
+                }
+              }
             }]
-        },
+          },
+          
         rest: {
             key: "rest",
             journalEntryName: "Rest",
@@ -8277,7 +8300,7 @@ async function incrementDay() {
         }
     }
 
-    let playerFolder = game.folders.find(folder => folder.name === "Spieler" && folder.type === "Actor");
+    let playerFolder = game.folders.find(folder => folder.name === "Players" && folder.type === "Actor");
     let strongholdFolder = game.folders.find(folder => folder.name === "Strongholds" && folder.type === "Actor");
 
     let players = playerFolder ? playerFolder.contents : [];
@@ -8365,9 +8388,15 @@ async function updateCheckboxState() {
 
 Hooks.on('updateSetting', (setting) => {
     if (setting.key === 'forbidden-lands.currentTimeIndex') {
-        updateTimeDisplay();
+      updateTimeDisplay();
+    } else if (
+      setting.key === 'forbidden-lands.currentDay' ||
+      setting.key === 'forbidden-lands.currentMonth' ||
+      setting.key === 'forbidden-lands.currentYear'
+    ) {
+      updateDateDisplay();
     }
-});
+  });
 
 
 
@@ -8537,12 +8566,12 @@ async function showConsumablesInfo() {
                 if (newIndex === 0) {
                     // Öffne einen Bestätigungsdialog
                     new Dialog({
-                        title: "Neuen Tag starten?",
-                        content: "<p>Möchten Sie einen neuen Tag starten?</p>",
+                        title: "Start New Day?",
+                        content: "<p>Would you like to start a new day?</p>",
                         buttons: {
                             yes: {
                                 icon: '<i class="fas fa-check"></i>',
-                                label: "Ja",
+                                label: "Yes",
                                 callback: async () => {
                                     // Wenn "Ja", den Tag erhöhen und auf "Morgen" wechseln
                                     await incrementDay();
@@ -8551,7 +8580,7 @@ async function showConsumablesInfo() {
                             },
                             no: {
                                 icon: '<i class="fas fa-times"></i>',
-                                label: "Nein",
+                                    label: "No",
                                 callback: async () => {
                                     // Wenn "Nein", einfach auf "Morgen" wechseln
                                     await setTimeIndex(0); // Setze Zeit auf "Morgen"
@@ -8596,15 +8625,34 @@ async function showConsumablesInfo() {
     // Listen for settings updates and refresh the time display when necessary
     Hooks.on('updateSetting', (setting) => {
         if (setting.key === 'forbidden-lands.currentTimeIndex') {
-            updateTimeDisplay();
+          updateTimeDisplay();
         } else if (
-            setting.key === 'forbidden-lands.currentDay' ||
-            setting.key === 'forbidden-lands.currentMonth' ||
-            setting.key === 'forbidden-lands.currentYear'
+          setting.key === 'forbidden-lands.currentDay' ||
+          setting.key === 'forbidden-lands.currentMonth' ||
+          setting.key === 'forbidden-lands.currentYear'
         ) {
-            updateDateDisplay();
+          updateDateDisplay();
+      
+          // Nur wenn der Tag gewechselt wurde, Hygiene rollen
+          if (setting.key === 'forbidden-lands.currentDay') {
+            // Ordner "Players" finden (Name ggf. auf "Spieler" anpassen)
+            const playerFolder = game.folders.find(f => f.name === "Players" && f.type === "Actor");
+            if (!playerFolder) {
+              console.warn("Folder 'Players' not found!");
+              return;
+            }
+            // Alle Actors im Folder durchlaufen
+            const actors = playerFolder.contents;
+            for (const actor of actors) {
+              // Nur Charaktere, die die Methode rollConsumable haben
+              if (actor.sheet?.rollConsumable) {
+                actor.sheet.rollConsumable('hygiene');
+              }
+            }
+          }
         }
-    });
+      });
+      
 
     // Mapping der Monate zu den Forage-Werten
     const forageModifiers = {
