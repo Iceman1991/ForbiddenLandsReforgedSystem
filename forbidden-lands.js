@@ -4241,7 +4241,7 @@
                 let item = this.actor.items.get(itemId);
             
                 // Den Ordner "Spieler" finden
-                let playerFolder = game.folders.find(folder => folder.name === "Spieler" && folder.type === "Actor");
+                let playerFolder = game.folders.find(folder => folder.name === "Players" && folder.type === "Actor");
                 // Den Ordner "Strongholds" finden
                 let strongholdsFolder = game.folders.find(folder => folder.name === "Strongholds" && folder.type === "Actor");
             
@@ -4384,7 +4384,7 @@
                 let currentActorId = this.actor.id;  // ID des aktuellen Actors
             
                 // Den Ordner "Spieler" finden
-                let playerFolder = game.folders.find(folder => folder.name === "Spieler" && folder.type === "Actor");
+                let playerFolder = game.folders.find(folder => folder.name === "Players" && folder.type === "Actor");
                 // Den Ordner "Strongholds" finden
                 let strongholdsFolder = game.folders.find(folder => folder.name === "Strongholds" && folder.type === "Actor");
             
@@ -4534,7 +4534,7 @@
                 let currentActorId = this.actor.id;  // ID des aktuellen Actors
             
                 // Den Ordner "Spieler" finden
-                let playerFolder = game.folders.find(folder => folder.name === "Spieler" && folder.type === "Actor");
+                let playerFolder = game.folders.find(folder => folder.name === "Players" && folder.type === "Actor");
                 // Den Ordner "Strongholds" finden
                 let strongholdsFolder = game.folders.find(folder => folder.name === "Strongholds" && folder.type === "Actor");
             
@@ -6113,7 +6113,7 @@ function handleTravelAction(assignedPartyMemberIds, rollName) {
                                 handleItemReward('water-key', sixCount);
         
                                 // Holen des Ordners 'Spieler'
-                                let playerFolder = game.folders.find(f => f.name === "Spieler" && f.type === "Actor");
+                                let playerFolder = game.folders.find(f => f.name === "Players" && f.type === "Actor");
         
                                 if (playerFolder) {
                                     // Überprüfen aller Schauspieler im 'Spieler'-Ordner
@@ -6124,7 +6124,7 @@ function handleTravelAction(assignedPartyMemberIds, rollName) {
                                         }
                                     });
                                 } else {
-                                    console.warn("Folder 'Spieler' not found!");
+                                    console.warn("Folder 'Players' not found!");
                                 }
                             }
                         }
@@ -6848,7 +6848,7 @@ Hooks.on('diceSoNiceRollComplete', async (messageId) => {
 // Funktion zur Bezahlung des Kochwurfs basierend auf dem Wurfergebnis
 // Funktion zur Bezahlung des Kochwurfs basierend auf dem Wurfergebnis
 async function handleCookingPayment(rollResult) {
-    let folderSpieler = game.folders.getName("Spieler");
+    let folderSpieler = game.folders.getName("Players");
     let folderStrongholds = game.folders.getName("Strongholds");
     let actorsInFolder = [...folderSpieler.contents, ...folderStrongholds.contents];
 
@@ -8702,24 +8702,6 @@ async function showConsumablesInfo() {
           setting.key === 'forbidden-lands.currentYear'
         ) {
           updateDateDisplay();
-      
-          // Nur wenn der Tag gewechselt wurde, Hygiene rollen
-          if (setting.key === 'forbidden-lands.currentDay') {
-            // Ordner "Players" finden (Name ggf. auf "Spieler" anpassen)
-            const playerFolder = game.folders.find(f => f.name === "Players" && f.type === "Actor");
-            if (!playerFolder) {
-              console.warn("Folder 'Players' not found!");
-              return;
-            }
-            // Alle Actors im Folder durchlaufen
-            const actors = playerFolder.contents;
-            for (const actor of actors) {
-              // Nur Charaktere, die die Methode rollConsumable haben
-              if (actor.sheet?.rollConsumable) {
-                actor.sheet.rollConsumable('hygiene');
-              }
-            }
-          }
         }
       });
       
@@ -8756,12 +8738,6 @@ async function showConsumablesInfo() {
     // Call updateForageInfo when the page is loaded
     updateForageInfo();
     
-    // Update forage info every time the date changes
-    Hooks.on('updateSetting', (setting) => {
-        if (setting.key === 'forbidden-lands.currentMonth') {
-            updateForageInfo();
-        }
-    });
 });
 
 
