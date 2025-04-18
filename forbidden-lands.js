@@ -8045,7 +8045,7 @@ Hooks.once('init', () => {
         scope: 'world',
         config: true,
         type: Number,
-        default: 0.5
+        default: 0.25
       });
       game.settings.register('forbidden-lands', 'weightWater', {
         name: 'Weight per Water unit',
@@ -8053,7 +8053,7 @@ Hooks.once('init', () => {
         scope: 'world',
         config: true,
         type: Number,
-        default: 0.75
+        default: 0.25
       });
       game.settings.register('forbidden-lands', 'weightTorches', {
         name: 'Weight per Torch',
@@ -8061,7 +8061,7 @@ Hooks.once('init', () => {
         scope: 'world',
         config: true,
         type: Number,
-        default: 0.1
+        default: 0.25
       });
       game.settings.register('forbidden-lands', 'weightArrows', {
         name: 'Weight per Arrow',
@@ -8069,7 +8069,7 @@ Hooks.once('init', () => {
         scope: 'world',
         config: true,
         type: Number,
-        default: 0.05
+        default: 0.25
       });
       game.settings.register('forbidden-lands', 'weightHygiene', {
         name: 'Weight per Hygiene',
