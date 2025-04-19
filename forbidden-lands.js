@@ -8126,37 +8126,27 @@ async function setTimeIndex(newIndex) {
 // Function to be called at the end of the day, only for actors controlled by users
 // Function to be called at the end of the day, only for actors controlled by online users
 async function endOfDayConsumablesCheck() {
-    // Get the list of active users (online players)
-    const onlineUsers = game.users.filter(user => user.active && user.character); // Only active users with a character
-
-    // Get actors controlled by these users
-    const actors = onlineUsers.map(user => user.character).filter(actor => actor); // Map users to their controlled actors
-
-    let messageContent = `<h2>End of Day Summary</h2><p>The following player-controlled actors have rolled for their food and water consumption:</p><ul>`;
-
-    for (const actor of actors) {
-        const foodRolled = actor.getFlag('forbidden-lands', 'foodRolled');
-        const waterRolled = actor.getFlag('forbidden-lands', 'waterRolled');
-
-        messageContent += `<li><strong>${actor.name}</strong>: `;
-        messageContent += `Food = ${foodRolled ? 'Yes' : 'No'}, `;
-        messageContent += `Water = ${waterRolled ? 'Yes' : 'No'}</li>`;
+    // 1. Den "Players"-Ordner holen
+    const playerFolder = game.folders.getName("Players");
+    if (!playerFolder) {
+      ui.notifications.warn("Ordner 'Players' nicht gefunden");
+      return;
     }
-
-    messageContent += '</ul>';
-
-    // Create a chat message with the summary
-    ChatMessage.create({
-        content: messageContent,
-        speaker: { alias: "End of Day Report" }
-    });
-
-    // Reset the flags for the next day
+  
+    // 2. Alle Schauspieler im Ordner filtern, die Charaktere sind und Hygiene > 0 haben
+    const actors = playerFolder.contents.filter(actor =>
+      actor.type === "character" &&
+      actor.system?.consumable?.hygiene?.value > 0
+    );
+  
+    // 3. Für jeden dieser Charaktere automatisch Hygiene würfeln
     for (const actor of actors) {
-        await actor.unsetFlag('forbidden-lands', 'foodRolled');
-        await actor.unsetFlag('forbidden-lands', 'waterRolled');
+      await actor.sheet.rollConsumable('hygiene');
+      // (Optional) Falls du später tracken möchtest, wer gewürfelt hat:
+      // await actor.setFlag('forbidden-lands', 'hygieneRolled', true);
     }
-}
+  }
+  
 
 // Update the incrementDay function to call the endOfDayConsumablesCheck
 async function incrementDay() {
