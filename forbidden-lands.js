@@ -6174,11 +6174,14 @@ function handleItemReward(actor, itemKey, quantity, prefix = "") {
 
     let existingItem = null;
     if (prefix !== "Project") {
-        existingItem = actor.items.find(i => i.name === itemName && i.data.data.shelfLife === itemData.data.data.shelfLife);
-    }
+        existingItem = actor.items.find(i =>
+          i.name === itemName &&
+          i.system.shelfLife === itemData.system.shelfLife
+        );
+      }
 
     if (existingItem) {
-        existingItem.update({ 'data.quantity': existingItem.data.data.quantity + quantity });
+        existingItem.update({ 'system.quantity': existingItem.system.quantity + quantity });
     } else {
         let newItemData = itemData.toObject();
         newItemData.name = itemName;
