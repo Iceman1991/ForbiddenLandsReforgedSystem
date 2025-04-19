@@ -4454,7 +4454,7 @@
             
                                 // Überprüfen, ob die übertragene Menge gültig ist
                                 if (goldTransfer > this.actor.system.currency.gold.value || silverTransfer > this.actor.system.currency.silver.value || copperTransfer > this.actor.system.currency.copper.value) {
-                                    ui.notifications.error("Die übertragene Menge darf nicht größer sein als die vorhandene Menge.");
+                                    ui.notifications.error("The transferred amount cannot be greater than the available amount.");
                                     return;
                                 }
             
@@ -4632,7 +4632,7 @@
                                         (targetActor.system.consumable.food.value + foodTransfer > 4) || 
                                         (targetActor.system.consumable.torches.value + torchesTransfer > 4) || 
                                         (targetActor.system.consumable.water.value + waterTransfer > 4)) {
-                                        ui.notifications.error("Das Ziel kann nicht mehr als 4 von einem Consumable haben.");
+                                        ui.notifications.error("The target cannot have more than 4 of a consumable.");
                                         return;
                                     }
                                 }
@@ -4642,7 +4642,7 @@
                                     foodTransfer > this.actor.system.consumable.food.value || 
                                     torchesTransfer > this.actor.system.consumable.torches.value || 
                                     waterTransfer > this.actor.system.consumable.water.value) {
-                                    ui.notifications.error("Die übertragene Menge darf nicht größer sein als die vorhandene Menge.");
+                                    ui.notifications.error("The transferred amount cannot be greater than the available amount.");
                                     return;
                                 }
             
@@ -5189,7 +5189,7 @@
         
                 // Blinde Nachricht an den GM senden
                 let currencyType = fieldName.split('.')[2];
-                let messageContent = `<span style="color: red;">${this.actor.name} hat die Währung geändert: ${currencyType.charAt(0).toUpperCase() + currencyType.slice(1)} von ${oldValue} auf ${newValue}</span>`;
+                let messageContent = `<span style="color: red;">${this.actor.name} has changed the currency: ${currencyType.charAt(0).toUpperCase() + currencyType.slice(1)} from ${oldValue} to ${newValue}</span>`;
                 ChatMessage.create({
                     content: messageContent,
                     whisper: ChatMessage.getWhisperRecipients("GM"),
@@ -5443,7 +5443,7 @@
         
                 // Blinde Nachricht an den GM senden
                 let currencyType = fieldName.split('.')[2];
-                let messageContent = `<span style="color: red;">${this.actor.name} hat die Währung geändert: ${currencyType.charAt(0).toUpperCase() + currencyType.slice(1)} von ${oldValue} auf ${newValue}</span>`;
+                let messageContent = `<span style="color: red;">${this.actor.name} has changed the currency: ${currencyType.charAt(0).toUpperCase() + currencyType.slice(1)} from ${oldValue} to ${newValue}</span>`;
                 ChatMessage.create({
                     content: messageContent,
                     whisper: ChatMessage.getWhisperRecipients("GM"),
@@ -5763,7 +5763,7 @@
     
             // Nachricht an den Chat senden
             let currencyType = fieldName.split('.')[2];
-            let messageContent = `<span style="color: red;">${this.actor.name} hat die Währung geändert: ${currencyType.charAt(0).toUpperCase() + currencyType.slice(1)} von ${oldValue} auf ${newValue}</span>`;
+            let messageContent = `<span style="color: red;">${this.actor.name} has changed the currency: ${currencyType.charAt(0).toUpperCase() + currencyType.slice(1)} from ${oldValue} to ${newValue}</span>`;
             ChatMessage.create({
                 content: messageContent,
                 speaker: { actor: this.actor }
@@ -5786,7 +5786,7 @@
             });
 
             // Nachricht an den Chat senden
-            let messageContent = `<span style="color: red;">${this.actor.name} hat ${modifier} ${currency} ${operator === "plus" ? "hinzugefügt" : "entfernt"}.</span>`;
+            let messageContent = `<span style="color: red;">${this.actor.name} has ${operator === "plus" ? "added" : "removed"} ${modifier} ${currency}.</span>`;
             ChatMessage.create({
                 content: messageContent,
                 speaker: { actor: this.actor }
@@ -7796,59 +7796,59 @@ function openRationDistributionDialog(rationsCooked, folderSpieler) {
 
     Hooks.on('renderActorSheet', (app, html, data) => {
         let actor = app.actor;
-        let user = game.user;  // Aktueller Benutzer
+        let user = game.user;  // Current user
     
-        // Stelle sicher, dass der Button nur einmal hinzugefügt wird
+        // Ensure the button is only added once
         if (!html.closest('.window-app').find('.manage-pin').length) {
-            // Button für PIN-Verwaltung hinzufügen
-            const managePinButton = `<a class="header-button control manage-pin" title="PIN verwalten"><i class="fas fa-lock"></i></a>`;
+            // Add button for PIN management
+            const managePinButton = `<a class="header-button control manage-pin" title="Manage PIN"><i class="fas fa-lock"></i></a>`;
             html.closest('.window-app').find('.window-title').after(managePinButton);
         }
     
-        // Entferne alle bestehenden click-Handler, bevor ein neuer hinzugefügt wird
+        // Remove all existing click handlers before adding a new one
         html.closest('.window-app').find('.manage-pin').off('click').click(async (ev) => {
             ev.preventDefault();
     
-            // Dialog zur PIN-Verwaltung
+            // Dialog for PIN management
             new Dialog({
-                title: "PIN verwalten",
+                title: "Manage PIN",
                 content: `
-                    <p>Was möchtest du mit dem PIN-Code tun?</p>
+                    <p>What would you like to do with the PIN code?</p>
                     <div style="display: flex; flex-direction: column; gap: 10px;">
-                        <button id="set-pin">PIN setzen</button>
-                        <button id="change-pin" ${!actor.getFlag('world', 'pinCode') ? 'disabled' : ''}>PIN ändern</button>
-                        <button id="remove-pin" ${!actor.getFlag('world', 'pinCode') ? 'disabled' : ''} style="color: red;">PIN entfernen</button>
+                        <button id="set-pin">Set PIN</button>
+                        <button id="change-pin" ${!actor.getFlag('world', 'pinCode') ? 'disabled' : ''}>Change PIN</button>
+                        <button id="remove-pin" ${!actor.getFlag('world', 'pinCode') ? 'disabled' : ''} style="color: red;">Remove PIN</button>
                     </div>
                 `,
                 buttons: {
                     close: {
-                        label: "Schließen",
+                        label: "Close",
                         callback: () => {}
                     }
                 },
                 render: (html) => {
                     html.find('#set-pin').click(async () => {
                         let setPinDialog = new Dialog({
-                            title: "PIN setzen",
-                            content: `<p>Bitte gib einen neuen PIN-Code ein:</p>
-                                      <input type="password" id="new-pin-input" placeholder="PIN-Code eingeben" autocomplete="off">`,
+                            title: "Set PIN",
+                            content: `<p>Please enter a new PIN code:</p>
+                                      <input type="password" id="new-pin-input" placeholder="Enter PIN code" autocomplete="off">`,
                             buttons: {
                                 submit: {
                                     icon: "<i class='fas fa-check'></i>",
-                                    label: "Setzen",
+                                    label: "Set",
                                     callback: async (html) => {
                                         let newPin = html.find("#new-pin-input").val();
                                         if (newPin) {
                                             await actor.setFlag('world', 'pinCode', newPin);
-                                            ui.notifications.info('PIN-Code erfolgreich gesetzt.');
+                                            ui.notifications.info('PIN code successfully set.');
                                         } else {
-                                            ui.notifications.error('Kein PIN eingegeben.');
+                                            ui.notifications.error('No PIN entered.');
                                         }
                                     }
                                 },
                                 cancel: {
                                     icon: "<i class='fas fa-times'></i>",
-                                    label: "Abbrechen"
+                                    label: "Cancel"
                                 }
                             }
                         });
@@ -7859,26 +7859,26 @@ function openRationDistributionDialog(rationsCooked, folderSpieler) {
                         if (!actor.getFlag('world', 'pinCode')) return;
                 
                         let changePinDialog = new Dialog({
-                            title: "PIN ändern",
-                            content: `<p>Bitte gib einen neuen PIN-Code ein:</p>
-                                      <input type="password" id="new-pin-input" placeholder="Neuen PIN-Code eingeben" autocomplete="off">`,
+                            title: "Change PIN",
+                            content: `<p>Please enter a new PIN code:</p>
+                                      <input type="password" id="new-pin-input" placeholder="Enter new PIN code" autocomplete="off">`,
                             buttons: {
                                 submit: {
                                     icon: "<i class='fas fa-check'></i>",
-                                    label: "Speichern",
+                                    label: "Save",
                                     callback: async (html) => {
                                         let newPin = html.find("#new-pin-input").val();
                                         if (newPin) {
                                             await actor.setFlag('world', 'pinCode', newPin);
-                                            ui.notifications.info('PIN-Code erfolgreich geändert.');
+                                            ui.notifications.info('PIN code successfully changed.');
                                         } else {
-                                            ui.notifications.error('Kein PIN eingegeben.');
+                                            ui.notifications.error('No PIN entered.');
                                         }
                                     }
                                 },
                                 cancel: {
                                     icon: "<i class='fas fa-times'></i>",
-                                    label: "Abbrechen"
+                                    label: "Cancel"
                                 }
                             }
                         });
@@ -7889,20 +7889,20 @@ function openRationDistributionDialog(rationsCooked, folderSpieler) {
                         if (!actor.getFlag('world', 'pinCode')) return;
                 
                         let confirmationDialog = new Dialog({
-                            title: "PIN entfernen",
-                            content: `<p>Bist du sicher, dass du den PIN-Code entfernen möchtest? Dies wird den Schutz des Actor Sheets aufheben.</p>`,
+                            title: "Remove PIN",
+                            content: `<p>Are you sure you want to remove the PIN code? This will remove the protection of the Actor Sheet.</p>`,
                             buttons: {
                                 confirm: {
                                     icon: "<i class='fas fa-check'></i>",
-                                    label: "Ja, entfernen",
+                                    label: "Yes, remove",
                                     callback: async () => {
                                         await actor.unsetFlag('world', 'pinCode');
-                                        ui.notifications.info('PIN-Code erfolgreich entfernt.');
+                                        ui.notifications.info('PIN code successfully removed.');
                                     }
                                 },
                                 cancel: {
                                     icon: "<i class='fas fa-times'></i>",
-                                    label: "Abbrechen"
+                                    label: "Cancel"
                                 }
                             }
                         });
@@ -7913,15 +7913,15 @@ function openRationDistributionDialog(rationsCooked, folderSpieler) {
             }).render(true);
         });
     
-        // Überprüfe, ob ein PIN-Code gesetzt ist und ob der Benutzer ein GM ist
+        // Check if a PIN code is set and if the user is a GM
         let pinCode = actor.getFlag('world', 'pinCode');
-        let lastPinEntry = user.getFlag('world', `lastPinEntry_${actor.id}`); // Zeitstempel der letzten PIN-Eingabe für den einzelnen User und Actor
+        let lastPinEntry = user.getFlag('world', `lastPinEntry_${actor.id}`); // Timestamp of last PIN entry for the individual user and actor
         let currentTime = Date.now();
     
         if (pinCode && !user.isGM) {
-            // Überprüfen, ob die letzte PIN-Eingabe weniger als eine Minute zurückliegt
-            if (!lastPinEntry || currentTime - lastPinEntry > 18000000) { // 60.000 ms = 1 Minute
-                // Füge eine blockierende Überlagerung über das Actor Sheet hinzu, nur wenn der Benutzer kein GM ist
+            // Check if the last PIN entry was less than 5 hours ago
+            if (!lastPinEntry || currentTime - lastPinEntry > 18000000) { // 18,000,000 ms = 5 hours
+                // Add a blocking overlay over the Actor Sheet, only if the user is not a GM
                 let overlay = $(`<div class="pin-overlay" style="
                     position: absolute; 
                     top: 0; 
@@ -7935,31 +7935,31 @@ function openRationDistributionDialog(rationsCooked, folderSpieler) {
                     align-items: center;
                     color: black;
                     font-size: 1.5em;
-                    ">PIN-Code erforderlich</div>`);
+                    ">PIN code required</div>`);
     
-                // Füge das Overlay dem Actor Sheet hinzu
+                // Add the overlay to the Actor Sheet
                 html.append(overlay);
     
-                // PIN-Code Dialog öffnen
+                // Open PIN code dialog
                 let dialog = new Dialog({
-                    title: "PIN-Code erforderlich",
+                    title: "PIN code required",
                     classes: ["pin-input-field"],
-                    content: `<p>Bitte gib deinen PIN-Code ein, um Zugriff auf das Character Sheet zu erhalten:</p><input type="password" id="pin-input" placeholder="PIN-Code eingeben">`,
+                    content: `<p>Please enter your PIN code to access the Character Sheet:</p><input type="password" id="pin-input" placeholder="Enter PIN code">`,
                     buttons: {
                         submit: {
                             icon: "<i class='fas fa-check'></i>",
-                            label: "Bestätigen",
+                            label: "Confirm",
                             callback: async (html) => {
                                 let input = html.find("#pin-input").val();
                                 if (input === pinCode) {
-                                    ui.notifications.info('Zugriff gewährt.');
-                                    // Entferne die Überlagerung, wenn der richtige PIN eingegeben wurde
+                                    ui.notifications.info('Access granted.');
+                                    // Remove the overlay when the correct PIN is entered
                                     overlay.remove();
-                                    // Speichere den aktuellen Zeitstempel als letzte PIN-Eingabe für diesen Benutzer und Actor
+                                    // Save the current timestamp as the last PIN entry for this user and actor
                                     await user.setFlag('world', `lastPinEntry_${actor.id}`, Date.now());
                                 } else {
-                                    ui.notifications.error('Falscher PIN-Code. Zugriff verweigert.');
-                                    app.close(); // Schließe das Actor Sheet, wenn der PIN falsch ist
+                                    ui.notifications.error('Wrong PIN code. Access denied.');
+                                    app.close(); // Close the Actor Sheet if the PIN is wrong
                                 }
                             }
                         }
@@ -8010,19 +8010,19 @@ link.href = "https://fonts.googleapis.com/icon?family=Material+Icons";
 link.rel = "stylesheet";
 document.head.appendChild(link);
 
-const timesOfDay = ["Morgen", "Mittag", "Abend", "Nacht"];
+const timesOfDay = ["Morning", "Afternoon", "Evening", "Night"];
 const darknessLevels = {
-    "Morgen": 0.2,
-    "Mittag": 0.0,
-    "Abend": 0.5,
-    "Nacht": 1.0
+    "Morning": 0.2,
+    "Afternoon": 0.0,
+    "Evening": 0.5,
+    "Night": 1.0
 };
 
 const icons = {
-    "Morgen": "wb_twilight",
-    "Mittag": "wb_sunny",
-    "Abend": "wb_twilight",
-    "Nacht": "nights_stay"
+    "Morning": "wb_twilight",
+    "Afternoon": "wb_sunny",
+    "Evening": "wb_twilight",
+    "Night": "nights_stay"
 };
 
 Hooks.once('init', () => {
@@ -8126,10 +8126,10 @@ async function setTimeIndex(newIndex) {
 // Function to be called at the end of the day, only for actors controlled by users
 // Function to be called at the end of the day, only for actors controlled by online users
 async function endOfDayConsumablesCheck() {
-    // 1. Den "Players"-Ordner holen
+    // Get the "Players" folder
     const playerFolder = game.folders.getName("Players");
     if (!playerFolder) {
-      ui.notifications.warn("Ordner 'Players' nicht gefunden");
+      ui.notifications.warn("'Players' folder not found");
       return;
     }
   
@@ -8514,10 +8514,10 @@ async function setDate(day, monthIndex, year) {
 }
 
 function openCalendar() {
-    // Prüfen, ob der Modal-Dialog bereits existiert
+    // Check if the modal dialog already exists
     if (document.getElementById("calendar-modal")) return;
 
-    // Erstelle ein Modal für die Datumsauswahl
+    // Create a modal for date selection
     const modal = document.createElement("div");
     modal.id = "calendar-modal";
     modal.innerHTML = `
@@ -8537,7 +8537,7 @@ function openCalendar() {
     `;
     document.body.appendChild(modal);
 
-    // Event-Listener für das Speichern und Schließen
+    // Event listeners for saving and closing
     document.getElementById("save-date").addEventListener("click", async () => {
         const day = parseInt(document.getElementById("calendar-day").value);
         const monthIndex = parseInt(document.getElementById("calendar-month").value);
@@ -8545,7 +8545,7 @@ function openCalendar() {
 
         await setDate(day, monthIndex, year);
 
-        // Schließe den Modal-Dialog
+        // Close the modal dialog
         document.body.removeChild(modal);
     });
 
