@@ -1771,15 +1771,24 @@
         }
         static async modifyWillpower(speaker, value, operation = "add") {
             let willpower = speaker.willpower;
-            if (willpower) {
-                if (operation === "subtract") {
-                    willpower = Math.max(willpower.value - value, 0);
-                    await speaker.update({
-                        "system.bio.willpower.value": willpower
-                    });
-                }
+            if (!willpower) return;
+          
+            // If the GM has disabled willpower‐on‐push, only allow subtraction
+            const noGain = game.settings.get("forbidden-lands", "disableWillpowerFromPush");
+            if (noGain && operation !== "subtract") return;
+          
+            if (operation === "subtract") {
+              // Only remove willpower
+              const newVal = Math.max(willpower.value - value, 0);
+              await speaker.update({ "system.bio.willpower.value": newVal });
+            } else {
+              // Full add/subtract behavior
+              const newVal = operation === "add"
+                ? Math.min(willpower.value + value, willpower.max)
+                : Math.max(willpower.value - value, 0);
+              await speaker.update({ "system.bio.willpower.value": newVal });
             }
-        }
+          }
         static async decreaseConsumable(messageId, number) {
             let {
                 speaker,
@@ -8026,6 +8035,16 @@ const icons = {
 };
 
 Hooks.once('init', () => {
+
+    game.settings.register("forbidden-lands", "disableWillpowerFromPush", {
+        name: "Disable gaining Willpower on push",
+        hint: "If checked, pushing a roll will only subtract willpower (never add).",
+        scope: "world",
+        config: true,
+        type: Boolean,
+        default: false
+      });
+
     game.settings.register('forbidden-lands', 'currentTimeIndex', {
         name: 'Current Time Index',
         scope: 'world',
