@@ -3747,7 +3747,7 @@
             hint: "CONFIG.ALTERNATIVESKULLS_DESC",
             scope: "client",
             config: !0,
-            default: !1,
+            default: !0,
             requiresReload: !0,
             type: Boolean
         }), game.settings.register("forbidden-lands", "useHealthAndResolve", {
@@ -4325,9 +4325,8 @@
             
                                     // Eine Kopie des Items erstellen
                                     let itemData = item.toObject();
-                                    if (itemData.system.quantity && transferQuantity > 1) {
-                                        itemData.system.quantity = transferQuantity;
-                                    }
+                                    itemData.system.quantity = transferQuantity;
+                                    
             
                                     // Prüfung nur bei rawmaterials
                                     if (item.type === "rawmaterials") {
