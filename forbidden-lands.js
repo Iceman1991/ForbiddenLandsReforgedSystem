@@ -6083,6 +6083,36 @@ function handleTravelAction(assignedPartyMemberIds, rollName) {
             });
         };
 
+        async function processRollResultByName(action, itemName, quantity) {
+            const actor = game.actors.getName("Your Actor Name"); // oder über Übergabe holen
+        
+            if (!actor) {
+                console.error("Actor not found");
+                return;
+            }
+        
+            const existingItem = actor.items.find(i => i.name === itemName);
+        
+            if (existingItem) {
+                const currentQty = Number(existingItem.system.quantity) || 0;
+                const addQty = Number(quantity) || 0;
+                await existingItem.update({ 'system.quantity': currentQty + addQty });
+            } else {
+                const itemTemplate = game.items.getName(itemName);
+                if (!itemTemplate) {
+                    console.error(`Item "${itemName}" not found in global item list`);
+                    return;
+                }
+        
+                const newItemData = itemTemplate.toObject();
+                newItemData.system.quantity = Number(quantity);
+                await actor.createEmbeddedDocuments("Item", [newItemData]);
+            }
+        
+            console.log(`Processed ${action}: ${quantity}x ${itemName}`);
+        }
+        
+
         const processRollResult = (rollName, itemKey, sixMultiplier) => {
             if (lastRoll.rolls[0].options.name !== rollName) return;
 
@@ -6159,8 +6189,8 @@ function handleTravelAction(assignedPartyMemberIds, rollName) {
         
         
 
-        processRollResult("Chop Wood", 'zSA7X1QooILVS69A', 2);
-        processRollResult("Fish", 'CXIhgFFaXOa61dtk', 1);
+        processRollResultByName("Chop Wood", 'Wood', 2);
+        processRollResultByName("Fish", 'Fish', 1);
         processForageResult();
 
         Hooks.off('diceSoNiceRollComplete', hookId);
