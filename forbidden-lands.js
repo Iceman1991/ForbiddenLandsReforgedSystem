@@ -3771,9 +3771,11 @@
         }), game.settings.register("forbidden-lands", "autoDecreaseConsumable", {
             name: "CONFIG.AUTO_DECREASE_CONSUMABLE",
             hint: "CONFIG.AUTO_DECREASE_CONSUMABLE_DESC",
-            config: !0,
+            scope: "world",
+            config: true,
+            type: Number,
             default: 2,
-            type: Number
+            restricted: true
         }), game.settings.register("forbidden-lands", "datasetDir", {
             name: "FLCG.SETTINGS.DATASET",
             hint: "FLCG.SETTINGS.DATASET_HINT",
@@ -5265,9 +5267,6 @@
                 for (let consumableresult of roll.dice[0].results) {
                     if (Number(consumableresult.result) <= threshold) {
                         decreasecount = decreasecount +1
-                    }
-                    if (Number(consumableresult.result) === 6) {
-                        healamount = healamount +1
                     }
                 }
 
