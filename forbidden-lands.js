@@ -107,43 +107,41 @@
             }
             return super.create(data, options);
         }
-        toggleCondition(conditionName) {
-            let statusEffect = CONFIG.statusEffects.find(it => it.id === conditionName),
-                currentEffect = Array.from(this.effects?.values()).find(it => it.icon === statusEffect.icon);
-    
-            if (currentEffect) {
-                if (this.system.condition[conditionName].value) {
-                    this.update({
-                        [`system.condition.${conditionName}.value`]: !1
-                    });
-                }
-                this.deleteEmbeddedDocuments("ActiveEffect", [currentEffect.id]);
-            } else {
-                this.createEmbeddedDocuments("ActiveEffect", [{
-                    label: game.i18n.localize(statusEffect.label),
-                    icon: statusEffect.icon,
-                    changes: statusEffect.changes,
-                    id: this.uuid,
-                    statuses: statusEffect.statuses,
-                    flags: {
-                        core: {
-                            statusId: statusEffect.id
-                        }
-                    }
-                }]);
-    
-                if (conditionName === "cold") {
-                    this.update({
-                        "system.attribute.strength.value": this.system.attribute.strength.value - 1,
-                        "system.attribute.wits.value": this.system.attribute.wits.value - 1
-                    });
-                    ChatMessage.create({
-                        content: `<b>${this.name}</b> is now cold, losing 1 point in Strength and Wits.`,
-                        speaker: ChatMessage.getSpeaker({actor: this})
-                    });
-                }
+        // In your Actor class
+        async toggleCondition(conditionName) {
+            const statusEffect = CONFIG.statusEffects.find(e => e.id === conditionName);
+            if (!statusEffect) return ui.notifications.warn(`Unknown condition ${conditionName}`);
+          
+            const existing = this.effects.find(e => e.flags.core?.statusId === statusEffect.id);
+            if (existing) {
+              await this.deleteEmbeddedDocuments("ActiveEffect", [ existing.id ]);
+              await this.update({ [`system.condition.${conditionName}.value`]: false });
             }
-        }
+            else {
+              // Name nicht vergessen!
+              await this.createEmbeddedDocuments("ActiveEffect", [{
+                name:  game.i18n.localize(statusEffect.label),
+                icon:  statusEffect.icon,
+                changes: statusEffect.changes,
+                disabled: false,
+                flags: { core: { statusId: statusEffect.id } }
+              }]);
+              await this.update({ [`system.condition.${conditionName}.value`]: true });
+          
+              if (conditionName === "cold") {
+                await this.update({
+                  "system.attribute.strength.value": this.system.attribute.strength.value - 1,
+                  "system.attribute.wits.value":     this.system.attribute.wits.value     - 1
+                });
+                ChatMessage.create({
+                  content: `<b>${this.name}</b> is now cold, losing 1 point in Strength and Wits.`,
+                  speaker: ChatMessage.getSpeaker({ actor: this })
+                });
+              }
+            }
+          }
+          
+  
     
         hasStrongholdWithName() {
             let strongholds = game.actors.filter(actor => actor.type === 'stronghold');
@@ -5154,6 +5152,7 @@
 
         activateListeners(html) {
             super.activateListeners(html);
+            
 
             // Monitor changes in currency buttons
             html.find(".currency-button").on("click contextmenu", ev => {
@@ -6070,7 +6069,7 @@ function handleTravelAction(assignedPartyMemberIds, rollName) {
                     <h4 class="dice-formula">
                         ${actor.name} receives
                     </h4>
-                    <img class="profile-img" style="width: 150px" src="${itemData.img}" data-edit="img" title="" /> <br> 
+                    <img class="profile-img" src="${itemData.img}" data-edit="img" title="" /> <br> 
                      <h4 class="dice-formula">
                      ${itemData.name}: ${quantity}
                     </h4>
@@ -6082,34 +6081,53 @@ function handleTravelAction(assignedPartyMemberIds, rollName) {
             });
         };
 
-        async function processRollResultByName(action, itemName, quantity) {
-            const actor = game.actors.getName("Your Actor Name"); // oder über Übergabe holen
-        
-            if (!actor) {
-                console.error("Actor not found");
-                return;
-            }
-        
-            const existingItem = actor.items.find(i => i.name === itemName);
-        
-            if (existingItem) {
-                const currentQty = Number(existingItem.system.quantity) || 0;
-                const addQty = Number(quantity) || 0;
-                await existingItem.update({ 'system.quantity': currentQty + addQty });
-            } else {
-                const itemTemplate = game.items.getName(itemName);
-                if (!itemTemplate) {
-                    console.error(`Item "${itemName}" not found in global item list`);
-                    return;
-                }
-        
-                const newItemData = itemTemplate.toObject();
-                newItemData.system.quantity = Number(quantity);
-                await actor.createEmbeddedDocuments("Item", [newItemData]);
-            }
-        
-            console.log(`Processed ${action}: ${quantity}x ${itemName}`);
-        }
+        /**
+ * Verarbeitet einen Wurf mit einem bestimmten Namen und fügt pro gewürfelter Sechs
+ * eine bestimmte Anzahl eines Items zum Charakter hinzu.
+ *
+ * @param {string} actionName        - Name des Rolls (z. B. "Chop Wood" oder "Fish")
+ * @param {string} itemName          - Name des Items in der globalen Item-Liste (z. B. "Wood", "Fish")
+ * @param {number} quantityPerSix    - Anzahl des Items pro gewürfelter Sechs
+ */
+async function processRollResultByName(actionName, itemName, quantityPerSix) {
+    // Nur weitermachen, wenn der Roll-Name übereinstimmt
+    if (lastRoll.rolls[0].options.name !== actionName) return;
+  
+    // Anzahl der gewürfelten Sechsen ermitteln
+    const sixCount = lastRoll.rolls[0].dice.reduce((total, die) =>
+      total + die.results.filter(r => r.result === 6).length
+    , 0);
+  
+    if (sixCount < 1) return;
+  
+    const totalQuantity = sixCount * quantityPerSix;
+  
+    // Actor aus dem Roll-Context holen (statt hardcodiert)
+    // (wird oben im Hook definiert: let actor = game.actors.get(lastRoll.speaker.actor);)
+    if (!actor) {
+      console.error(`Actor nicht gefunden für Aktion "${actionName}"`);
+      return;
+    }
+  
+    // Existierendes Item im Inventar suchen
+    let existing = actor.items.find(i => i.name === itemName);
+    if (existing) {
+      await existing.update({ 'system.quantity': existing.system.quantity + totalQuantity });
+    } else {
+      // Template aus der globalen Item-Liste holen
+      const template = game.items.getName(itemName);
+      if (!template) {
+        console.error(`Item "${itemName}" nicht in globaler Liste gefunden`);
+        return;
+      }
+      let newData = template.toObject();
+      newData.system.quantity = totalQuantity;
+      await actor.createEmbeddedDocuments('Item', [newData]);
+    }
+  
+    console.log(`Processed ${actionName}: awarded ${totalQuantity}× ${itemName}`);
+  }
+  
         
 
         const processRollResult = (rollName, itemKey, sixMultiplier) => {
@@ -6124,55 +6142,88 @@ function handleTravelAction(assignedPartyMemberIds, rollName) {
             }
         };
 
-        const processForageResult = () => {
-            if (lastRoll.rolls[0].options.name !== "Forage") return;
+        /**
+ /**
+ * Öffnet nach einem Forage-Roll das Auswahl-Dialogfenster, wenn mindestens eine Sechs gewürfelt wurde.
+ * Lädt jede Ressource (Herbs, Vegetables, Wood, Fish, Water) via game.items.getName und verwendet deren .id und .img.
+ */
+ function processForageResult() {
+    const rollInfo = lastRoll.rolls[0];
+    const rollName = rollInfo.options.name;
+    const rollType = lastRoll.flags?.fbl?.rollType;
+  
+    // Nur bei echten Forage-Rolls weiter
+    if (
+      rollName !== game.i18n.localize("FLPS.TRAVEL.FORAGE") &&
+      rollType !== "travel-find-food"
+    ) return;
+  
+    // Zähle alle gewürfelten Sechsen
+    const sixCount = rollInfo.dice.reduce((sum, die) =>
+      sum + die.results.filter(r => r.result === 6).length
+    , 0);
+    if (sixCount < 1) return;
+  
+    // Helper: Button für Item-Rewards
+    const makeButton = (itemName) => {
+      const template = game.items.getName(itemName);
+      if (!template) {
+        console.error(`Item "${itemName}" nicht gefunden`);
+        return null;
+      }
+      return {
+        label: `<img class="forage-image" src="${template.img}" /> ${itemName}`,
+        callback: () => handleItemReward(template.id, sixCount)
+      };
+    };
+  
+    // Buttons für Herbs und Vegetables
+    const buttons = {};
+    ["Herbs", "Vegetables"].forEach(name => {
+      const key = name.toLowerCase();
+      const btn = makeButton(name);
+      if (btn) buttons[key] = btn;
+    });
+  
+    // Separater Button für Water: setzt bei Wahl allen Spielern (Players-Folder) Water auf 4
+    buttons["water"] = {
+      label: `<img class="forage-image" src="systems/forbidden-lands/assets/assorted/water.webp" /> Water`,
+      callback: async () => {
+        // Ordner "Players" suchen
+        const folder = game.folders.find(f => f.name === "Players" && f.type === "Actor");
+        if (!folder) {
+          console.error("Folder 'Players' nicht gefunden");
+          return;
+        }
+        // Alle Charaktere in diesem Ordner
+        const chars = game.actors.filter(a => a.folder?.id === folder.id);
+        if (chars.length === 0) {
+          ui.notifications.warn("Keine Charaktere im Players-Folder gefunden");
+          return;
+        }
+        // Bei jedem Charakter den Water-Wert auf 4 setzen
+        for (let pc of chars) {
+          await pc.update({ 'system.consumable.water.value': 4 });
+        }
         
-            let sixCount = lastRoll.rolls[0].dice.reduce((count, die) => {
-                return count + die.results.filter(result => result.result === 6).length;
-            }, 0);
-        
-            if (sixCount > 0) {
-                new Dialog({
-                    title: "Forage Result",
-                    content: "<p>Choose your reward:</p>",
-                    buttons: {
-                        herbs: {
-                            label: `<img class="forage-image" src="${getItemImage('SupoqycbuiyAHUL1')}" style=" vertical-align:middle; margin-right:5px;"> <br> Herbs`,
-                            callback: () => handleItemReward('SupoqycbuiyAHUL1', sixCount)
-                        },
-                        vegetables: {
-                            label: `<img class="forage-image" src="${getItemImage('s6hrxJwz2zsOGBrM')}" style=" vertical-align:middle; margin-right:5px;"> <br> Vegetables`,
-                            callback: () => handleItemReward('s6hrxJwz2zsOGBrM', sixCount)
-                        },
-                        water: {
-                            label: `<img class="forage-image" src="systems/forbidden-lands/assets/assorted/water.webp" style=" vertical-align:middle; margin-right:5px;"> <br> Water`,
-                            callback: () => {
-                                handleItemReward('water-key', sixCount);
-        
-                                // Holen des Ordners 'Spieler'
-                                let playerFolder = game.folders.find(f => f.name === "Players" && f.type === "Actor");
-        
-                                if (playerFolder) {
-                                    // Überprüfen aller Schauspieler im 'Spieler'-Ordner
-                                    playerFolder.contents.forEach(actor => {
-                                        if (actor.system.consumable && actor.system.consumable.water) {
-                                            // Setze den Wasserwert auf 4, falls dieser vorhanden ist
-                                            actor.update({ 'system.consumable.water.value': 4 });
-                                        }
-                                    });
-                                } else {
-                                    console.warn("Folder 'Players' not found!");
-                                }
-                            }
-                        }
-                    },
-                    default: ""
-                }, {
-                    resizable: true,
-                    classes: ["foraging-dialog"]
-                }).render(true);
-            }
-        };
+      }
+    };
+  
+    // Dialog rendern
+    new Dialog({
+      title: game.i18n.localize("FLPS.TRAVEL.FORAGE_DIALOG_TITLE"),
+      content: "<p>Choose your reward:</p>",
+      buttons
+    }, {
+      resizable: true,
+      classes: ["foraging-dialog"]
+    }).render(true);
+  }
+  
+  
+  
+  
+  
         
         
         
@@ -6241,7 +6292,7 @@ function handleItemReward(actor, itemKey, quantity, prefix = "") {
         chatMessage += `
             <div style="display: block">
                 <div style="margin: 10px auto; text-align: center;">
-                    <img class="" src="${itemData.img}" data-edit="img" title="" style="width: 100px; height: 100px; object-fit: contain;" />
+                    <img class="" src="${itemData.img}" data-edit="img" title=""  />
                     <h4 class="dice-formula" style="margin-top: 10px;">${itemData.name}: ${quantity}</h4>
                 </div>
             </div>`;
@@ -6266,7 +6317,7 @@ function handleItemReward(actor, itemKey, quantity, prefix = "") {
                         chatMessage += `
                         <div style="display: block">
                             <div style="margin: 10px auto; text-align: center;">
-                                <img class="" src="${reward.item.img}" data-edit="img" title="" style="width: 100px; height: 100px; object-fit: contain;" />
+                                <img class="" src="${reward.item.img}" data-edit="img" title=""  />
                                 <h4 class="dice-formula" style="margin-top: 10px;">${reward.item.name}: ${reward.quantity}</h4>
                             </div>
                         </div>`;

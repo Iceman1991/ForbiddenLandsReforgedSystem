@@ -1983,7 +1983,8 @@
 .forbidden-lands .item-list .items .item img{
 	object-fit:contain;
 	vertical-align:middle;
-	filter:drop-shadow(0 0 3px rgba(0,0,0,.6))
+	filter:drop-shadow(0 0 3px rgba(0,0,0,.6));
+	display: inline-block;
 }
 .forbidden-lands.sheet .window-content{
 	background:var(--color-theme-background);
@@ -5075,3 +5076,4 @@ background: linear-gradient(90deg, rgba(223,223,223,1) 0%, rgba(255,255,255,1) 5
     background: none;
 	display: none;
 }
+
